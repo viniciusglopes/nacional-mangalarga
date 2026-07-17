@@ -291,6 +291,26 @@ function HomeContent() {
 
       <Banner posicao="topo" />
 
+      <div className="px-4 pt-3 max-w-2xl mx-auto w-full">
+        <Link
+          href="/calendario"
+          className="flex items-center gap-3 bg-gradient-to-r from-emerald-900/40 to-emerald-800/20 border border-emerald-700/30 rounded-xl p-3 hover:border-emerald-500/40 transition-all active:scale-[0.98]"
+        >
+          <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-emerald-300">Programacao de Julgamentos</p>
+            <p className="text-[10px] text-[var(--text-muted)]">18/07 a 01/08 · Confira o calendario completo</p>
+          </div>
+          <svg className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+      </div>
+
       <div className="flex-1 px-4 py-3 max-w-2xl mx-auto w-full">
         <div className="space-y-2">
           {animals.map(animal => (
