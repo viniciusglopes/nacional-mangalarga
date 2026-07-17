@@ -11,7 +11,7 @@ type CampeonatoRanking = {
   ranking: RankingAnimal[]
 }
 
-const POSICAO_ICONS = ['🥇', '🥈', '🥉']
+const MEDAL_IMGS = ['/medals/medal_1.png', '/medals/medal_2.png', '/medals/medal_3.png']
 
 export default function RankingPage() {
   const [rankings, setRankings] = useState<CampeonatoRanking[]>([])
@@ -112,7 +112,7 @@ export default function RankingPage() {
                       href={`/animal/${a.id}`}
                       className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--bg-card-hover)] transition-colors"
                     >
-                      <span className="text-lg flex-shrink-0">{POSICAO_ICONS[i]}</span>
+                      <img src={MEDAL_IMGS[i]} alt={`${i+1}o lugar`} className="w-10 h-10 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-semibold truncate">{a.nome}</p>
                         <p className="text-[10px] text-[var(--text-muted)]">{a.haras || ''} · {a.total_votos} votos</p>

@@ -5,7 +5,7 @@ import { supabase, Animal, RankingAnimal } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
 
 const POSICAO_LABELS = ['Campeao', 'Reservado', '1o Premio']
-const POSICAO_ICONS = ['🥇', '🥈', '🥉']
+const MEDAL_IMGS = ['/medals/medal_1.png', '/medals/medal_2.png', '/medals/medal_3.png']
 
 type MeusVotos = { modalidade: string; posicao: number; animal_id: number; animal_nome: string }[]
 
@@ -114,7 +114,7 @@ export default function VotingPanel({ campeonato, tipoCampeonato }: { campeonato
             <div className="space-y-1.5">
               {ranking.slice(0, 3).map((r, i) => (
                 <div key={r.id} className="flex items-center gap-2 bg-[var(--bg-primary)] rounded-lg p-2">
-                  <span className="text-lg">{POSICAO_ICONS[i]}</span>
+                  <img src={MEDAL_IMGS[i]} alt={POSICAO_LABELS[i]} className="w-8 h-8" />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold truncate">{r.nome}</p>
                     <p className="text-[10px] text-[var(--text-muted)]">{r.total_votos} votos · {r.pontos} pts</p>
@@ -148,7 +148,7 @@ export default function VotingPanel({ campeonato, tipoCampeonato }: { campeonato
                     onClick={() => openVoting(pos)}
                     className="w-full flex items-center gap-2 bg-[var(--bg-primary)] rounded-lg p-2.5 text-left hover:bg-[var(--bg-card-hover)] transition-colors"
                   >
-                    <span className="text-lg">{POSICAO_ICONS[pos - 1]}</span>
+                    <img src={MEDAL_IMGS[pos - 1]} alt={POSICAO_LABELS[pos - 1]} className="w-8 h-8" />
                     <div className="min-w-0 flex-1">
                       <p className="text-[10px] text-[var(--text-muted)] uppercase">{POSICAO_LABELS[pos - 1]}</p>
                       {voto ? (
