@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import { supabase, Animal } from '@/lib/supabase'
 import Link from 'next/link'
+import { trackAnimalClick } from '@/components/Analytics'
 
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null
@@ -44,6 +45,7 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
 
     const favs = JSON.parse(localStorage.getItem('nm_favoritos') || '[]')
     setIsFav(favs.includes(Number(id)))
+    trackAnimalClick(Number(id))
   }, [id])
 
   function toggleFav() {
