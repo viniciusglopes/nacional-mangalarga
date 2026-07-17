@@ -50,7 +50,7 @@ export default function Campeonatos() {
                 onClick={() => { setFilterMarcha(m); setLoading(true) }}
                 className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   filterMarcha === m
-                    ? m === 'MB' ? 'bg-blue-500 text-white' : m === 'MP' ? 'bg-purple-500 text-white' : 'bg-[var(--accent)] text-black'
+                    ? m === 'MB' ? 'bg-blue-500 text-white' : m === 'MP' ? 'bg-orange-500 text-white' : 'bg-[var(--accent)] text-black'
                     : 'text-[var(--text-secondary)]'
                 }`}
               >
@@ -80,7 +80,7 @@ export default function Campeonatos() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                          c.tipo_marcha === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
+                          c.tipo_marcha === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
                         }`}>
                           {c.tipo_marcha}
                         </span>
