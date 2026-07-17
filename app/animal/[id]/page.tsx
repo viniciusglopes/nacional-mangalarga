@@ -85,7 +85,7 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
           </Link>
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-bold truncate">{animal.nome}</h1>
-            <p className="text-[10px] text-[var(--text-muted)]">{animal.categoria}{animal.tipo_campeonato && animal.tipo_campeonato !== 'Castrado' ? ` · ${animal.tipo_campeonato === 'Exclusivamente Marcha' ? 'Excl. Marcha' : animal.tipo_campeonato}` : ''}</p>
+            <p className="text-[10px] text-[var(--text-muted)]">{animal.categoria}{(animal.tipo_campeonato === 'Exclusivamente Marcha' || animal.tambem_excl_marcha) ? ' · Excl. Marcha' : ''}</p>
           </div>
           <button onClick={toggleFav} className="p-2">
             <svg className={`w-5 h-5 ${isFav ? 'text-red-400 fill-red-400' : 'text-[var(--text-muted)]'}`} viewBox="0 0 24 24" stroke="currentColor" fill={isFav ? 'currentColor' : 'none'}>
@@ -106,14 +106,7 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
                 }`}>
                   {animal.tipo_marcha === 'MB' ? 'Marcha Batida' : 'Marcha Picada'}
                 </span>
-                <span className={`text-xs font-bold px-2 py-1 rounded ${
-                  animal.tipo_campeonato === 'Exclusivamente Marcha'
-                    ? 'bg-amber-500/30 text-amber-300'
-                    : 'bg-green-500/20 text-green-400'
-                }`}>
-                  {animal.tipo_campeonato === 'Exclusivamente Marcha' ? 'Excl. Marcha' : 'Convencional'}
-                </span>
-                {animal.tambem_excl_marcha && animal.tipo_campeonato !== 'Exclusivamente Marcha' && (
+                {(animal.tipo_campeonato === 'Exclusivamente Marcha' || animal.tambem_excl_marcha) && (
                   <span className="text-xs font-bold px-2 py-1 rounded bg-amber-500/30 text-amber-300">
                     Excl. Marcha
                   </span>

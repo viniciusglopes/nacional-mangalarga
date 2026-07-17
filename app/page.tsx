@@ -306,14 +306,7 @@ function HomeContent() {
                     }`}>
                       {animal.tipo_marcha === 'MB' ? 'M. Batida' : 'M. Picada'}
                     </span>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                      animal.tipo_campeonato === 'Exclusivamente Marcha'
-                        ? 'bg-amber-500/30 text-amber-300'
-                        : 'bg-green-500/20 text-green-400'
-                    }`}>
-                      {animal.tipo_campeonato === 'Exclusivamente Marcha' ? 'Excl. Marcha' : 'Convencional'}
-                    </span>
-                    {animal.tambem_excl_marcha && animal.tipo_campeonato !== 'Exclusivamente Marcha' && (
+                    {(animal.tipo_campeonato === 'Exclusivamente Marcha' || animal.tambem_excl_marcha) && (
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-300">
                         Excl. Marcha
                       </span>
