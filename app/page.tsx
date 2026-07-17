@@ -4,6 +4,8 @@ import { Suspense, useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase, Animal } from '@/lib/supabase'
 import Link from 'next/link'
+import Banner from '@/components/Banner'
+import { trackAnimalClick } from '@/components/Analytics'
 
 const MARCHAS = [
   { value: 'Todas', label: 'Todas' },
@@ -155,7 +157,8 @@ function HomeContent() {
               <p className="text-xs text-[var(--text-muted)]">Mangalarga Marchador</p>
             </div>
             <div className="ml-auto text-right">
-              <span className="text-xs text-[var(--text-muted)]">{total} animais</span>
+              <p className="text-2xl font-bold text-[var(--accent)] leading-none">{total.toLocaleString()}</p>
+              <p className="text-[10px] text-[var(--text-muted)] uppercase">animais</p>
             </div>
           </div>
 
@@ -272,12 +275,15 @@ function HomeContent() {
         </div>
       </header>
 
+      <Banner posicao="topo" />
+
       <div className="flex-1 px-4 py-3 max-w-2xl mx-auto w-full">
         <div className="space-y-2">
           {animals.map(animal => (
             <Link
               key={animal.id}
               href={`/animal/${animal.id}`}
+              onClick={() => trackAnimalClick(animal.id)}
               className="block bg-[var(--bg-card)] rounded-xl p-3 border border-[var(--border)] hover:border-[var(--accent)]/30 transition-all active:scale-[0.98]"
             >
               <div className="flex items-start justify-between gap-2">
@@ -332,6 +338,8 @@ function HomeContent() {
 
         {hasMore && <div ref={sentinelRef} className="h-10" />}
       </div>
+
+      <Banner posicao="rodape" />
 
       <nav className="sticky bottom-0 bg-[#0f0f1a]/95 backdrop-blur-sm border-t border-[var(--border)] px-4 py-2 safe-bottom">
         <div className="max-w-2xl mx-auto flex justify-around">

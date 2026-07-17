@@ -1,0 +1,408 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+
+type Admin = { id: number; email: string; nome: string }
+type Banner = { id: number; posicao: string; titulo: string; imagem_url: string; link_url: string; html_content: string; ativo: boolean; ordem: number }
+type TopAnimal = { animal_id: number; nome: string; categoria: string; tipo_marcha: string; click_count: number }
+type DailyView = { dia: string; total: number }
+
+export default function AdminPage() {
+  const [token, setToken] = useState<string | null>(null)
+  const [admin, setAdmin] = useState<Admin | null>(null)
+  const [tab, setTab] = useState<'banners' | 'analytics' | 'admins'>('analytics')
+
+  useEffect(() => {
+    const t = localStorage.getItem('nm_admin_token')
+    const a = localStorage.getItem('nm_admin_user')
+    if (t && a) {
+      try {
+        const payload = JSON.parse(atob(t))
+        if (payload.exp > Date.now()) {
+          setToken(t)
+          setAdmin(JSON.parse(a))
+        } else {
+          localStorage.removeItem('nm_admin_token')
+          localStorage.removeItem('nm_admin_user')
+        }
+      } catch { /* invalid token */ }
+    }
+  }, [])
+
+  if (!token || !admin) return <LoginForm onLogin={(t, a) => { setToken(t); setAdmin(a) }} />
+
+  return (
+    <main className="min-h-screen bg-[#0f0f1a]">
+      <header className="bg-[var(--bg-card)] border-b border-[var(--border)] px-4 py-3">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold">Admin - Nacional MM</h1>
+            <p className="text-xs text-[var(--text-muted)]">Ola, {admin.nome}</p>
+          </div>
+          <button
+            onClick={() => { localStorage.removeItem('nm_admin_token'); localStorage.removeItem('nm_admin_user'); setToken(null); setAdmin(null) }}
+            className="text-xs text-red-400 hover:text-red-300"
+          >
+            Sair
+          </button>
+        </div>
+      </header>
+
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="flex gap-2 mb-6">
+          {(['analytics', 'banners', 'admins'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                tab === t ? 'bg-[var(--accent)] text-black' : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white'
+              }`}
+            >
+              {t === 'analytics' ? 'Analytics' : t === 'banners' ? 'Banners' : 'Admins'}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'analytics' && <AnalyticsPanel token={token} />}
+        {tab === 'banners' && <BannersPanel token={token} />}
+        {tab === 'admins' && <AdminsPanel token={token} />}
+      </div>
+    </main>
+  )
+}
+
+function LoginForm({ onLogin }: { onLogin: (token: string, admin: Admin) => void }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    const res = await fetch('/api/admin/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      setError(data.error || 'Erro ao fazer login')
+      setLoading(false)
+      return
+    }
+    localStorage.setItem('nm_admin_token', data.token)
+    localStorage.setItem('nm_admin_user', JSON.stringify(data.admin))
+    onLogin(data.token, data.admin)
+  }
+
+  return (
+    <main className="min-h-screen bg-[#0f0f1a] flex items-center justify-center px-4">
+      <form onSubmit={handleSubmit} className="w-full max-w-sm bg-[var(--bg-card)] rounded-xl p-6 border border-[var(--border)]">
+        <div className="text-center mb-6">
+          <div className="w-12 h-12 rounded-lg bg-[var(--accent)] flex items-center justify-center text-black font-bold text-xl mx-auto mb-3">MM</div>
+          <h1 className="text-lg font-bold">Admin</h1>
+          <p className="text-xs text-[var(--text-muted)]">43a Nacional Mangalarga Marchador</p>
+        </div>
+        {error && <p className="text-red-400 text-sm mb-3 text-center">{error}</p>}
+        <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required
+          className="w-full mb-3 py-2.5 px-3 bg-[#0f0f1a] border border-[var(--border)] rounded-lg text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]" />
+        <input type="password" placeholder="Senha" value={password} onChange={e => setPassword(e.target.value)} required
+          className="w-full mb-4 py-2.5 px-3 bg-[#0f0f1a] border border-[var(--border)] rounded-lg text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]" />
+        <button type="submit" disabled={loading}
+          className="w-full py-2.5 bg-[var(--accent)] text-black font-semibold rounded-lg text-sm disabled:opacity-50">
+          {loading ? 'Entrando...' : 'Entrar'}
+        </button>
+      </form>
+    </main>
+  )
+}
+
+function AnalyticsPanel({ token }: { token: string }) {
+  const [topAnimals, setTopAnimals] = useState<TopAnimal[]>([])
+  const [dailyViews, setDailyViews] = useState<DailyView[]>([])
+  const [totalViews, setTotalViews] = useState(0)
+  const [totalClicks, setTotalClicks] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      const [topRes, viewsRes, totalVRes, totalCRes] = await Promise.all([
+        fetch('/api/admin/stats?type=top_animals', { headers }),
+        fetch('/api/admin/stats?type=daily_views', { headers }),
+        fetch('/api/admin/stats?type=total_views', { headers }),
+        fetch('/api/admin/stats?type=total_clicks', { headers }),
+      ])
+      const [top, views, tv, tc] = await Promise.all([topRes.json(), viewsRes.json(), totalVRes.json(), totalCRes.json()])
+      setTopAnimals(top)
+      setDailyViews(views)
+      setTotalViews(tv.total || 0)
+      setTotalClicks(tc.total || 0)
+      setLoading(false)
+    }
+    load()
+  }, [token])
+
+  if (loading) return <div className="text-center py-8"><div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" /></div>
+
+  const maxViews = Math.max(...dailyViews.map(d => d.total), 1)
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
+          <p className="text-[10px] text-[var(--text-muted)] uppercase">Page Views (7d)</p>
+          <p className="text-2xl font-bold text-[var(--accent)]">{totalViews.toLocaleString()}</p>
+        </div>
+        <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
+          <p className="text-[10px] text-[var(--text-muted)] uppercase">Cliques Animais</p>
+          <p className="text-2xl font-bold text-[var(--accent)]">{totalClicks.toLocaleString()}</p>
+        </div>
+      </div>
+
+      {dailyViews.length > 0 && (
+        <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
+          <h3 className="text-xs font-semibold text-[var(--accent)] uppercase mb-3">Visitas Diarias</h3>
+          <div className="flex items-end gap-1 h-24">
+            {dailyViews.map(d => (
+              <div key={d.dia} className="flex-1 flex flex-col items-center gap-1">
+                <span className="text-[9px] text-[var(--text-muted)]">{d.total}</span>
+                <div className="w-full bg-[var(--accent)]/30 rounded-t" style={{ height: `${(d.total / maxViews) * 100}%`, minHeight: '4px' }}>
+                  <div className="w-full h-full bg-[var(--accent)] rounded-t" />
+                </div>
+                <span className="text-[8px] text-[var(--text-muted)]">{new Date(d.dia).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
+        <h3 className="text-xs font-semibold text-[var(--accent)] uppercase mb-3">Top 20 Animais Mais Clicados</h3>
+        {topAnimals.length === 0 ? (
+          <p className="text-sm text-[var(--text-muted)]">Ainda sem dados de cliques</p>
+        ) : (
+          <div className="space-y-2">
+            {topAnimals.map((a, i) => (
+              <div key={a.animal_id} className="flex items-center gap-3 py-1.5 border-b border-[var(--border)] last:border-0">
+                <span className="text-xs font-bold text-[var(--accent)] w-6">{i + 1}.</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{a.nome}</p>
+                  <p className="text-[10px] text-[var(--text-muted)]">{a.categoria} - {a.tipo_marcha === 'MB' ? 'M. Batida' : 'M. Picada'}</p>
+                </div>
+                <span className="text-sm font-bold text-[var(--accent)]">{a.click_count}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function BannersPanel({ token }: { token: string }) {
+  const [banners, setBanners] = useState<Banner[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [form, setForm] = useState({ posicao: 'topo', titulo: '', imagem_url: '', link_url: '', html_content: '', ativo: true, ordem: 0 })
+
+  const loadBanners = useCallback(async () => {
+    const res = await fetch('/api/admin/banners', { headers: { 'Authorization': `Bearer ${token}` } })
+    const data = await res.json()
+    setBanners(data)
+    setLoading(false)
+  }, [token])
+
+  useEffect(() => { loadBanners() }, [loadBanners])
+
+  async function saveBanner(e: React.FormEvent) {
+    e.preventDefault()
+    const method = editingId ? 'PUT' : 'POST'
+    const body = editingId ? { ...form, id: editingId } : form
+    await fetch('/api/admin/banners', {
+      method,
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    setShowForm(false)
+    setEditingId(null)
+    setForm({ posicao: 'topo', titulo: '', imagem_url: '', link_url: '', html_content: '', ativo: true, ordem: 0 })
+    loadBanners()
+  }
+
+  async function deleteBanner(id: number) {
+    await fetch('/api/admin/banners', {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    loadBanners()
+  }
+
+  async function toggleBanner(b: Banner) {
+    await fetch('/api/admin/banners', {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: b.id, ativo: !b.ativo }),
+    })
+    loadBanners()
+  }
+
+  if (loading) return <div className="text-center py-8"><div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" /></div>
+
+  const inputClass = "w-full py-2 px-3 bg-[#0f0f1a] border border-[var(--border)] rounded-lg text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Banners ({banners.length})</h3>
+        <button onClick={() => { setShowForm(true); setEditingId(null); setForm({ posicao: 'topo', titulo: '', imagem_url: '', link_url: '', html_content: '', ativo: true, ordem: 0 }) }}
+          className="px-3 py-1.5 bg-[var(--accent)] text-black rounded-lg text-xs font-semibold">
+          + Novo Banner
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={saveBanner} className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)] space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <select value={form.posicao} onChange={e => setForm({ ...form, posicao: e.target.value })} className={inputClass}>
+              <option value="topo">Topo</option>
+              <option value="rodape">Rodape</option>
+            </select>
+            <input type="number" placeholder="Ordem" value={form.ordem} onChange={e => setForm({ ...form, ordem: Number(e.target.value) })} className={inputClass} />
+          </div>
+          <input placeholder="Titulo (opcional)" value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} className={inputClass} />
+          <input placeholder="URL da imagem" value={form.imagem_url} onChange={e => setForm({ ...form, imagem_url: e.target.value })} className={inputClass} />
+          <input placeholder="Link de destino (opcional)" value={form.link_url} onChange={e => setForm({ ...form, link_url: e.target.value })} className={inputClass} />
+          <textarea placeholder="HTML personalizado (opcional, substitui imagem)" value={form.html_content} onChange={e => setForm({ ...form, html_content: e.target.value })} rows={3} className={inputClass} />
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={form.ativo} onChange={e => setForm({ ...form, ativo: e.target.checked })} />
+            Ativo
+          </label>
+          <div className="flex gap-2">
+            <button type="submit" className="px-4 py-2 bg-[var(--accent)] text-black rounded-lg text-sm font-semibold">
+              {editingId ? 'Salvar' : 'Criar'}
+            </button>
+            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] rounded-lg text-sm">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      )}
+
+      <div className="space-y-2">
+        {banners.map(b => (
+          <div key={b.id} className={`bg-[var(--bg-card)] rounded-xl p-3 border ${b.ativo ? 'border-[var(--accent)]/30' : 'border-[var(--border)] opacity-50'}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${b.posicao === 'topo' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}`}>
+                  {b.posicao.toUpperCase()}
+                </span>
+                <span className="text-sm ml-2">{b.titulo || '(sem titulo)'}</span>
+                <span className="text-[10px] text-[var(--text-muted)] ml-2">Ordem: {b.ordem}</span>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => toggleBanner(b)} className={`text-xs ${b.ativo ? 'text-green-400' : 'text-red-400'}`}>
+                  {b.ativo ? 'ON' : 'OFF'}
+                </button>
+                <button onClick={() => { setEditingId(b.id); setForm({ posicao: b.posicao, titulo: b.titulo || '', imagem_url: b.imagem_url || '', link_url: b.link_url || '', html_content: b.html_content || '', ativo: b.ativo, ordem: b.ordem }); setShowForm(true) }}
+                  className="text-xs text-[var(--accent)]">Editar</button>
+                <button onClick={() => deleteBanner(b.id)} className="text-xs text-red-400">Excluir</button>
+              </div>
+            </div>
+            {b.imagem_url && <p className="text-[10px] text-[var(--text-muted)] mt-1 truncate">{b.imagem_url}</p>}
+          </div>
+        ))}
+        {banners.length === 0 && <p className="text-sm text-[var(--text-muted)] text-center py-4">Nenhum banner cadastrado</p>}
+      </div>
+    </div>
+  )
+}
+
+function AdminsPanel({ token }: { token: string }) {
+  const [admins, setAdmins] = useState<Admin[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ email: '', password: '', nome: '' })
+  const [msg, setMsg] = useState('')
+
+  const loadAdmins = useCallback(async () => {
+    const res = await fetch('/api/admin/admins', { headers: { 'Authorization': `Bearer ${token}` } })
+    const data = await res.json()
+    setAdmins(data)
+    setLoading(false)
+  }, [token])
+
+  useEffect(() => { loadAdmins() }, [loadAdmins])
+
+  async function addAdmin(e: React.FormEvent) {
+    e.preventDefault()
+    const res = await fetch('/api/admin/admins', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+    const data = await res.json()
+    if (!res.ok) { setMsg(data.error); return }
+    setShowForm(false)
+    setForm({ email: '', password: '', nome: '' })
+    setMsg('Admin adicionado!')
+    loadAdmins()
+    setTimeout(() => setMsg(''), 3000)
+  }
+
+  async function removeAdmin(id: number) {
+    await fetch('/api/admin/admins', {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    loadAdmins()
+  }
+
+  if (loading) return <div className="text-center py-8"><div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" /></div>
+
+  const inputClass = "w-full py-2 px-3 bg-[#0f0f1a] border border-[var(--border)] rounded-lg text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Administradores ({admins.length})</h3>
+        <button onClick={() => setShowForm(true)} className="px-3 py-1.5 bg-[var(--accent)] text-black rounded-lg text-xs font-semibold">
+          + Novo Admin
+        </button>
+      </div>
+
+      {msg && <p className="text-sm text-green-400">{msg}</p>}
+
+      {showForm && (
+        <form onSubmit={addAdmin} className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)] space-y-3">
+          <input placeholder="Nome" value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} required className={inputClass} />
+          <input type="email" placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required className={inputClass} />
+          <input type="password" placeholder="Senha" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required className={inputClass} />
+          <div className="flex gap-2">
+            <button type="submit" className="px-4 py-2 bg-[var(--accent)] text-black rounded-lg text-sm font-semibold">Adicionar</button>
+            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] rounded-lg text-sm">Cancelar</button>
+          </div>
+        </form>
+      )}
+
+      <div className="space-y-2">
+        {admins.map(a => (
+          <div key={a.id} className="bg-[var(--bg-card)] rounded-xl p-3 border border-[var(--border)] flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">{a.nome}</p>
+              <p className="text-[10px] text-[var(--text-muted)]">{a.email}</p>
+            </div>
+            {admins.length > 1 && (
+              <button onClick={() => removeAdmin(a.id)} className="text-xs text-red-400">Remover</button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
