@@ -5,8 +5,18 @@ import { useSearchParams } from 'next/navigation'
 import { supabase, Animal } from '@/lib/supabase'
 import Link from 'next/link'
 
-const MARCHAS = ['Todas', 'MB', 'MP'] as const
+const MARCHAS = [
+  { value: 'Todas', label: 'Todas' },
+  { value: 'MB', label: 'M. Batida' },
+  { value: 'MP', label: 'M. Picada' },
+]
 const PER_PAGE = 30
+
+const selectStyle = {
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat' as const,
+  backgroundPosition: 'right 12px center',
+}
 
 export default function Home() {
   return (
@@ -24,8 +34,15 @@ function HomeContent() {
   const [marcha, setMarcha] = useState<string>('Todas')
   const [castrado, setCastrado] = useState(false)
   const [categoria, setCategoria] = useState<string>('Todas')
+  const [criador, setCriador] = useState<string>('Todos')
+  const [expositor, setExpositor] = useState<string>('Todos')
+  const [haras, setHaras] = useState<string>('Todos')
   const [categorias, setCategorias] = useState<string[]>([])
+  const [criadores, setCriadores] = useState<string[]>([])
+  const [expositores, setExpositores] = useState<string[]>([])
+  const [harasList, setHarasList] = useState<string[]>([])
   const [campeonatoFilter, setCampeonatoFilter] = useState<string | null>(campeonatoParam)
+  const [showFilters, setShowFilters] = useState(false)
   const [animals, setAnimals] = useState<Animal[]>([])
   const [loading, setLoading] = useState(false)
   const [total, setTotal] = useState(0)
@@ -39,14 +56,27 @@ function HomeContent() {
   }, [campeonatoParam])
 
   useEffect(() => {
-    async function loadCategorias() {
-      const { data } = await supabase.rpc('nm_distinct_categorias')
-      if (data) {
-        setCategorias(data.map((d: { categoria: string }) => d.categoria).filter(Boolean))
-      }
+    async function loadFilters() {
+      const [catRes, criRes, expRes, harRes] = await Promise.all([
+        supabase.rpc('nm_distinct_categorias'),
+        supabase.rpc('nm_distinct_criadores'),
+        supabase.rpc('nm_distinct_expositores'),
+        supabase.rpc('nm_distinct_haras'),
+      ])
+      if (catRes.data) setCategorias(catRes.data.map((d: { categoria: string }) => d.categoria).filter(Boolean))
+      if (criRes.data) setCriadores(criRes.data.map((d: { criador: string }) => d.criador).filter(Boolean))
+      if (expRes.data) setExpositores(expRes.data.map((d: { expositor: string }) => d.expositor).filter(Boolean))
+      if (harRes.data) setHarasList(harRes.data.map((d: { haras: string }) => d.haras).filter(Boolean))
     }
-    loadCategorias()
+    loadFilters()
   }, [])
+
+  const activeFilterCount = [
+    categoria !== 'Todas',
+    criador !== 'Todos',
+    expositor !== 'Todos',
+    haras !== 'Todos',
+  ].filter(Boolean).length
 
   const fetchAnimals = useCallback(async (pageNum: number, reset: boolean) => {
     setLoading(true)
@@ -70,6 +100,9 @@ function HomeContent() {
     if (marcha !== 'Todas') query = query.eq('tipo_marcha', marcha)
     if (castrado) query = query.ilike('categoria', '%Castrado%')
     if (categoria !== 'Todas') query = query.eq('categoria', categoria)
+    if (criador !== 'Todos') query = query.eq('criador', criador)
+    if (expositor !== 'Todos') query = query.eq('expositor', expositor)
+    if (haras !== 'Todos') query = query.eq('haras', haras)
     if (campeonatoFilter) query = query.eq('campeonato', campeonatoFilter)
 
     const { data, count, error } = await query
@@ -84,7 +117,7 @@ function HomeContent() {
       setHasMore(data.length === PER_PAGE)
     }
     setLoading(false)
-  }, [search, marcha, castrado, categoria, campeonatoFilter])
+  }, [search, marcha, castrado, categoria, criador, expositor, haras, campeonatoFilter])
 
   useEffect(() => {
     setPage(0)
@@ -94,7 +127,7 @@ function HomeContent() {
       fetchAnimals(0, true)
     }, 300)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [search, marcha, castrado, categoria, campeonatoFilter, fetchAnimals])
+  }, [search, marcha, castrado, categoria, criador, expositor, haras, campeonatoFilter, fetchAnimals])
 
   useEffect(() => {
     if (!sentinelRef.current || !hasMore) return
@@ -154,20 +187,20 @@ function HomeContent() {
           </div>
 
           <div className="space-y-2">
-            {/* Row 1: Marcha + Castrado */}
+            {/* Row 1: Marcha + Castrado + Filtros toggle */}
             <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
               <div className="flex gap-1 bg-[var(--bg-card)] rounded-lg p-0.5 flex-shrink-0">
                 {MARCHAS.map(m => (
                   <button
-                    key={m}
-                    onClick={() => setMarcha(m)}
+                    key={m.value}
+                    onClick={() => setMarcha(m.value)}
                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                      marcha === m
-                        ? m === 'MB' ? 'bg-[var(--mb-color)] text-white' : m === 'MP' ? 'bg-[var(--mp-color)] text-white' : 'bg-[var(--accent)] text-black'
+                      marcha === m.value
+                        ? m.value === 'MB' ? 'bg-[var(--mb-color)] text-white' : m.value === 'MP' ? 'bg-[var(--mp-color)] text-white' : 'bg-[var(--accent)] text-black'
                         : 'text-[var(--text-secondary)] hover:text-white'
                     }`}
                   >
-                    {m}
+                    {m.label}
                   </button>
                 ))}
               </div>
@@ -181,20 +214,60 @@ function HomeContent() {
               >
                 Castrado
               </button>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex-shrink-0 border flex items-center gap-1 ${
+                  showFilters || activeFilterCount > 0
+                    ? 'bg-[var(--accent)] text-black border-[var(--accent)]'
+                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-white'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                Filtros{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+              </button>
             </div>
 
-            {/* Row 2: Categoria dropdown */}
-            <select
-              value={categoria}
-              onChange={e => setCategoria(e.target.value)}
-              className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
-              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
-            >
-              <option value="Todas">Todas as categorias</option>
-              {categorias.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            {/* Expandable filters */}
+            {showFilters && (
+              <div className="space-y-2 pt-1">
+                <select value={categoria} onChange={e => setCategoria(e.target.value)}
+                  className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
+                  style={selectStyle}>
+                  <option value="Todas">Todas as categorias</option>
+                  {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+
+                <select value={criador} onChange={e => setCriador(e.target.value)}
+                  className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
+                  style={selectStyle}>
+                  <option value="Todos">Todos os criadores</option>
+                  {criadores.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+
+                <select value={expositor} onChange={e => setExpositor(e.target.value)}
+                  className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
+                  style={selectStyle}>
+                  <option value="Todos">Todos os expositores</option>
+                  {expositores.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+
+                <select value={haras} onChange={e => setHaras(e.target.value)}
+                  className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
+                  style={selectStyle}>
+                  <option value="Todos">Todos os haras</option>
+                  {harasList.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={() => { setCategoria('Todas'); setCriador('Todos'); setExpositor('Todos'); setHaras('Todos') }}
+                    className="text-xs text-[var(--accent)] hover:underline"
+                  >
+                    Limpar filtros
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -213,7 +286,7 @@ function HomeContent() {
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                       animal.tipo_marcha === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
                     }`}>
-                      {animal.tipo_marcha}
+                      {animal.tipo_marcha === 'MB' ? 'M. Batida' : 'M. Picada'}
                     </span>
                     {animal.num_catalogo && (
                       <span className="text-[10px] text-[var(--text-muted)] font-mono">#{animal.num_catalogo}</span>
