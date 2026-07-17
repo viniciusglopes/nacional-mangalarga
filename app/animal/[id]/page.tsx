@@ -102,7 +102,7 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <span className={`text-xs font-bold px-2 py-1 rounded ${
-                  animal.tipo_marcha === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
+                  animal.tipo_marcha === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
                 }`}>
                   {animal.tipo_marcha === 'MB' ? 'Marcha Batida' : 'Marcha Picada'}
                 </span>

@@ -37,15 +37,11 @@ function HomeContent() {
   const [search, setSearch] = useState('')
   const [marcha, setMarcha] = useState<string>('Todas')
   const [categoria, setCategoria] = useState<string>('Todas')
-  const [criador, setCriador] = useState<string>('Todos')
-  const [expositor, setExpositor] = useState<string>('Todos')
-  const [haras, setHaras] = useState<string>('Todos')
   const [categorias, setCategorias] = useState<string[]>([])
   const [criadores, setCriadores] = useState<string[]>([])
   const [expositores, setExpositores] = useState<string[]>([])
   const [harasList, setHarasList] = useState<string[]>([])
   const [campeonatoFilter, setCampeonatoFilter] = useState<string | null>(campeonatoParam)
-  const [showFilters, setShowFilters] = useState(false)
   const [animals, setAnimals] = useState<Animal[]>([])
   const [loading, setLoading] = useState(false)
   const [total, setTotal] = useState(0)
@@ -106,12 +102,6 @@ function HomeContent() {
     return results.slice(0, 8)
   }, [search, harasList, criadores, expositores])
 
-  const activeFilterCount = [
-    criador !== 'Todos',
-    expositor !== 'Todos',
-    haras !== 'Todos',
-  ].filter(Boolean).length
-
   const fetchAnimals = useCallback(async (pageNum: number, reset: boolean) => {
     setLoading(true)
     const from = pageNum * PER_PAGE
@@ -137,9 +127,6 @@ function HomeContent() {
     }
     if (marcha !== 'Todas') query = query.eq('tipo_marcha', marcha)
     if (categoria !== 'Todas') query = query.eq('categoria', categoria)
-    if (criador !== 'Todos' && !activeFilter) query = query.eq('criador', criador)
-    if (expositor !== 'Todos' && !activeFilter) query = query.eq('expositor', expositor)
-    if (haras !== 'Todos' && !activeFilter) query = query.eq('haras', haras)
     if (campeonatoFilter) query = query.eq('campeonato', campeonatoFilter)
 
     const { data, count, error } = await query
@@ -154,7 +141,7 @@ function HomeContent() {
       setHasMore(data.length === PER_PAGE)
     }
     setLoading(false)
-  }, [search, marcha, categoria, criador, expositor, haras, campeonatoFilter, activeFilter])
+  }, [search, marcha, categoria, campeonatoFilter, activeFilter])
 
   useEffect(() => {
     setPage(0)
@@ -164,7 +151,7 @@ function HomeContent() {
       fetchAnimals(0, true)
     }, 300)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [search, marcha, categoria, criador, expositor, haras, campeonatoFilter, activeFilter, fetchAnimals])
+  }, [search, marcha, categoria, campeonatoFilter, activeFilter, fetchAnimals])
 
   useEffect(() => {
     if (!sentinelRef.current || !hasMore) return
@@ -278,7 +265,7 @@ function HomeContent() {
                     onClick={() => setMarcha(m.value)}
                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                       marcha === m.value
-                        ? m.value === 'MB' ? 'bg-[var(--mb-color)] text-white' : m.value === 'MP' ? 'bg-[var(--mp-color)] text-white' : 'bg-[var(--accent)] text-black'
+                        ? m.value === 'MB' ? 'bg-blue-500 text-white' : m.value === 'MP' ? 'bg-orange-500 text-white' : 'bg-[var(--accent)] text-black'
                         : 'text-[var(--text-secondary)] hover:text-white'
                     }`}
                   >
@@ -286,17 +273,6 @@ function HomeContent() {
                   </button>
                 ))}
               </div>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex-shrink-0 border flex items-center gap-1 ${
-                  showFilters || activeFilterCount > 0
-                    ? 'bg-[var(--accent)] text-black border-[var(--accent)]'
-                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-white'
-                }`}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-                Filtros{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-              </button>
             </div>
 
             {/* Categoria always visible */}
@@ -307,40 +283,6 @@ function HomeContent() {
               {categorias.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
 
-            {/* Expandable filters (Criador, Expositor, Haras dropdowns) */}
-            {showFilters && (
-              <div className="space-y-2 pt-1">
-                <select value={criador} onChange={e => setCriador(e.target.value)}
-                  className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
-                  style={selectStyle}>
-                  <option value="Todos">Todos os criadores</option>
-                  {criadores.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-
-                <select value={expositor} onChange={e => setExpositor(e.target.value)}
-                  className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
-                  style={selectStyle}>
-                  <option value="Todos">Todos os expositores</option>
-                  {expositores.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-
-                <select value={haras} onChange={e => setHaras(e.target.value)}
-                  className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
-                  style={selectStyle}>
-                  <option value="Todos">Todos os haras</option>
-                  {harasList.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-
-                {activeFilterCount > 0 && (
-                  <button
-                    onClick={() => { setCriador('Todos'); setExpositor('Todos'); setHaras('Todos') }}
-                    className="text-xs text-[var(--accent)] hover:underline"
-                  >
-                    Limpar filtros
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </header>
@@ -360,7 +302,7 @@ function HomeContent() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                      animal.tipo_marcha === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
+                      animal.tipo_marcha === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
                     }`}>
                       {animal.tipo_marcha === 'MB' ? 'M. Batida' : 'M. Picada'}
                     </span>
