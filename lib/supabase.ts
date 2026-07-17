@@ -47,14 +47,3 @@ export type Usuario = {
   telefone: string | null
 }
 
-export type RankingAnimal = {
-  id: number
-  nome: string
-  registro: string
-  tipo_marcha: string
-  num_catalogo: string | null
-  haras: string | null
-  categoria: string
-  total_votos: number
-  pontos: number
-}

@@ -156,7 +156,7 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
         </div>
 
         {/* Voting */}
-        <VotingPanel campeonato={animal.campeonato} tipoCampeonato={animal.tipo_campeonato} />
+        <VotingPanel animalId={animal.id} campeonato={animal.campeonato} />
 
         {/* Share */}
         <button

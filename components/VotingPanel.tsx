@@ -1,232 +1,123 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase, Animal, RankingAnimal } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
+import Link from 'next/link'
 
-const POSICAO_LABELS = ['Campeao', 'Reservado', '1o Premio']
 const MEDAL_IMGS = ['/medals/medal_1.png', '/medals/medal_2.png', '/medals/medal_3.png']
 
-type MeusVotos = { modalidade: string; posicao: number; animal_id: number; animal_nome: string }[]
+type RankingItem = { id: number; nome: string; registro: string; haras: string; num_catalogo: number; total_votos: number }
 
-export default function VotingPanel({ campeonato, tipoCampeonato }: { campeonato: string; tipoCampeonato: string }) {
+export default function VotingPanel({ animalId, campeonato }: { animalId: number; campeonato: string }) {
   const { user } = useAuth()
-  const [tab, setTab] = useState<'marcha' | 'categoria'>('marcha')
-  const [ranking, setRanking] = useState<RankingAnimal[]>([])
-  const [meusVotos, setMeusVotos] = useState<MeusVotos>([])
-  const [animals, setAnimals] = useState<Animal[]>([])
-  const [voting, setVoting] = useState<number | null>(null)
-  const [search, setSearch] = useState('')
-  const [msg, setMsg] = useState('')
-  const [loadingAnimals, setLoadingAnimals] = useState(false)
+  const [ranking, setRanking] = useState<RankingItem[]>([])
+  const [myVote, setMyVote] = useState<number | null>(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     loadRanking()
-    if (user) loadMeusVotos()
-  }, [tab, campeonato, user])
+    if (user) loadMyVote()
+  }, [campeonato, user])
 
   async function loadRanking() {
-    const { data } = await supabase.rpc('nm_ranking', { p_campeonato: campeonato, p_modalidade: tab })
+    const { data } = await supabase.rpc('nm_ranking_simples', { p_campeonato: campeonato })
     setRanking(data || [])
   }
 
-  async function loadMeusVotos() {
+  async function loadMyVote() {
     if (!user) return
-    const { data } = await supabase.rpc('nm_meus_votos', { p_usuario_id: user.id, p_campeonato: campeonato })
-    setMeusVotos(data || [])
+    const { data } = await supabase.rpc('nm_meu_voto', { p_usuario_id: user.id, p_campeonato: campeonato })
+    setMyVote(data && data.length > 0 ? data[0].animal_id : null)
   }
 
-  async function openVoting(posicao: number) {
-    setVoting(posicao)
-    setSearch('')
-    setLoadingAnimals(true)
-
-    let query = supabase
-      .from('nm_animais')
-      .select('*')
-      .eq('campeonato', campeonato)
-      .order('nome')
-
-    if (tab === 'categoria') {
-      query = query.neq('tipo_campeonato', 'Exclusivamente Marcha')
-    }
-
-    const { data } = await query
-    setAnimals(data || [])
-    setLoadingAnimals(false)
-  }
-
-  async function votar(animalId: number) {
-    if (!user || voting === null) return
-    setMsg('')
-    const { data } = await supabase.rpc('nm_votar', {
+  async function toggleVote() {
+    if (!user || loading) return
+    setLoading(true)
+    const { data } = await supabase.rpc('nm_toggle_voto', {
       p_usuario_id: user.id,
       p_animal_id: animalId,
       p_campeonato: campeonato,
-      p_modalidade: tab,
-      p_posicao: voting,
     })
-    if (data?.error) {
-      setMsg(data.error)
-      return
+    if (data?.voted) {
+      setMyVote(animalId)
+    } else {
+      setMyVote(null)
     }
-    setVoting(null)
-    loadRanking()
-    loadMeusVotos()
+    await loadRanking()
+    setLoading(false)
   }
 
-  const filteredAnimals = animals.filter(a =>
-    a.nome.toLowerCase().includes(search.toLowerCase())
-  )
-
-  const myVotesForTab = meusVotos.filter(v => v.modalidade === tab)
-
-  const isExclMarchaOnly = tipoCampeonato === 'Exclusivamente Marcha'
+  const voted = myVote === animalId
+  const votedOther = myVote !== null && myVote !== animalId
 
   return (
     <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
-      <div className="flex border-b border-[var(--border)]">
-        <button
-          onClick={() => setTab('marcha')}
-          className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${
-            tab === 'marcha' ? 'bg-[var(--accent)] text-black' : 'text-[var(--text-secondary)]'
-          }`}
-        >
-          Votacao Marcha
-        </button>
-        {!isExclMarchaOnly && (
-          <button
-            onClick={() => setTab('categoria')}
-            className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${
-              tab === 'categoria' ? 'bg-[var(--accent)] text-black' : 'text-[var(--text-secondary)]'
-            }`}
-          >
-            Votacao Categoria
-          </button>
-        )}
+      <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-card-hover)]">
+        <h3 className="text-xs font-bold uppercase tracking-wide text-[var(--accent)]">Votacao Popular</h3>
+        <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Escolha seu favorito nesta categoria</p>
       </div>
 
       <div className="p-4">
-        {/* Ranking */}
-        {ranking.length > 0 && (
-          <div className="mb-4">
-            <h4 className="text-[10px] text-[var(--accent)] uppercase tracking-wide font-semibold mb-2">Ranking</h4>
-            <div className="space-y-1.5">
-              {ranking.slice(0, 3).map((r, i) => (
-                <div key={r.id} className="flex items-center gap-2 bg-[var(--bg-primary)] rounded-lg p-2">
-                  <img src={MEDAL_IMGS[i]} alt={POSICAO_LABELS[i]} className="w-8 h-8" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold truncate">{r.nome}</p>
-                    <p className="text-[10px] text-[var(--text-muted)]">{r.total_votos} votos · {r.pontos} pts</p>
-                  </div>
-                  {r.num_catalogo && (
-                    <span className="text-sm font-bold text-[var(--accent)]">#{r.num_catalogo}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* User's votes or login prompt */}
         {!user ? (
-          <div className="text-center py-3">
-            <p className="text-xs text-[var(--text-muted)] mb-2">Faca login para votar nos seus favoritos</p>
+          <div className="text-center py-2">
+            <p className="text-xs text-[var(--text-muted)] mb-2">Faca login para votar</p>
             <a href="/login" className="inline-block px-4 py-2 bg-[var(--accent)] text-black text-xs font-semibold rounded-lg">
               Entrar
             </a>
           </div>
         ) : (
-          <div>
-            <h4 className="text-[10px] text-[var(--accent)] uppercase tracking-wide font-semibold mb-2">Seus votos</h4>
-            <div className="space-y-1.5">
-              {[1, 2, 3].map(pos => {
-                const voto = myVotesForTab.find(v => v.posicao === pos)
-                return (
-                  <button
-                    key={pos}
-                    onClick={() => openVoting(pos)}
-                    className="w-full flex items-center gap-2 bg-[var(--bg-primary)] rounded-lg p-2.5 text-left hover:bg-[var(--bg-card-hover)] transition-colors"
-                  >
-                    <img src={MEDAL_IMGS[pos - 1]} alt={POSICAO_LABELS[pos - 1]} className="w-8 h-8" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] text-[var(--text-muted)] uppercase">{POSICAO_LABELS[pos - 1]}</p>
-                      {voto ? (
-                        <p className="text-xs font-semibold truncate">{voto.animal_nome}</p>
-                      ) : (
-                        <p className="text-xs text-[var(--text-muted)] italic">Toque para escolher</p>
-                      )}
-                    </div>
-                    <svg className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                )
-              })}
-            </div>
+          <div className="mb-4">
+            <button
+              onClick={toggleVote}
+              disabled={loading}
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.97] ${
+                voted
+                  ? 'bg-[var(--accent)] text-black'
+                  : 'bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)]/50'
+              }`}
+            >
+              {loading ? (
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill={voted ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                  {voted ? 'Meu voto neste animal' : votedOther ? 'Trocar meu voto para este' : 'Votar neste animal'}
+                </>
+              )}
+            </button>
+            {votedOther && (
+              <p className="text-[10px] text-amber-400 text-center mt-1.5">Voce ja votou em outro animal desta categoria</p>
+            )}
           </div>
         )}
 
-        {msg && <p className="text-xs text-red-400 mt-2 text-center">{msg}</p>}
-      </div>
-
-      {/* Animal selection modal */}
-      {voting !== null && (
-        <div className="fixed inset-0 z-[100] bg-black/80 flex flex-col">
-          <div className="bg-[var(--bg-primary)] flex-1 flex flex-col max-w-2xl mx-auto w-full">
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border)]">
-              <button onClick={() => setVoting(null)} className="text-[var(--text-muted)]">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-              <div>
-                <p className="text-sm font-bold">Escolher {POSICAO_LABELS[voting - 1]}</p>
-                <p className="text-[10px] text-[var(--text-muted)]">{tab === 'marcha' ? 'Votacao Marcha' : 'Votacao Categoria'}</p>
-              </div>
-            </div>
-            <div className="px-4 py-2 border-b border-[var(--border)]">
-              <input
-                type="text"
-                placeholder="Buscar animal..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
-              />
-            </div>
-            <div className="flex-1 overflow-y-auto px-4 py-2">
-              {loadingAnimals ? (
-                <div className="flex justify-center py-8">
-                  <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {filteredAnimals.map(a => (
-                    <button
-                      key={a.id}
-                      onClick={() => votar(a.id)}
-                      className="w-full flex items-center gap-3 bg-[var(--bg-card)] rounded-lg p-3 text-left hover:border-[var(--accent)]/30 border border-[var(--border)] transition-all"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                            a.tipo_marcha === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
-                          }`}>
-                            {a.tipo_marcha === 'MB' ? 'M. Batida' : 'M. Picada'}
-                          </span>
-                        </div>
-                        <p className="text-sm font-semibold truncate">{a.nome}</p>
-                        <p className="text-[10px] text-[var(--text-muted)]">{a.haras || ''} · Reg. {a.registro}</p>
-                      </div>
-                      {a.num_catalogo && (
-                        <span className="text-lg font-bold text-[var(--accent)]">#{a.num_catalogo}</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
+        {ranking.length > 0 && (
+          <div>
+            <h4 className="text-[10px] text-[var(--accent)] uppercase tracking-wide font-semibold mb-2">Ranking</h4>
+            <div className="space-y-1.5">
+              {ranking.slice(0, 3).map((r, i) => (
+                <Link
+                  key={r.id}
+                  href={`/animal/${r.id}`}
+                  className={`flex items-center gap-2 rounded-lg p-2 transition-colors ${
+                    r.id === animalId ? 'bg-[var(--accent)]/10 border border-[var(--accent)]/20' : 'bg-[var(--bg-primary)] hover:bg-[var(--bg-card-hover)]'
+                  }`}
+                >
+                  <img src={MEDAL_IMGS[i]} alt={`${i+1}o lugar`} className="w-8 h-8 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold truncate">{r.nome}</p>
+                    <p className="text-[10px] text-[var(--text-muted)]">{r.haras || ''}</p>
+                  </div>
+                  <span className="text-sm font-bold text-[var(--accent)]">{r.total_votos}</span>
+                </Link>
+              ))}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

@@ -1,15 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase, RankingAnimal } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
 
-type CampeonatoRanking = {
-  campeonato: string
-  modalidade: string
-  ranking: RankingAnimal[]
-}
+type RankingItem = { id: number; nome: string; registro: string; haras: string; num_catalogo: number; total_votos: number }
+type CampeonatoRanking = { campeonato: string; ranking: RankingItem[] }
 
 const MEDAL_IMGS = ['/medals/medal_1.png', '/medals/medal_2.png', '/medals/medal_3.png']
 
@@ -22,7 +19,7 @@ export default function RankingPage() {
     async function load() {
       const { data: votos } = await supabase
         .from('nm_votos')
-        .select('campeonato, modalidade')
+        .select('campeonato')
 
       if (!votos || votos.length === 0) {
         setRankings([])
@@ -30,17 +27,13 @@ export default function RankingPage() {
         return
       }
 
-      const unique = new Map<string, { campeonato: string; modalidade: string }>()
-      for (const v of votos) {
-        const key = `${v.campeonato}|${v.modalidade}`
-        if (!unique.has(key)) unique.set(key, { campeonato: v.campeonato, modalidade: v.modalidade })
-      }
+      const unique = [...new Set(votos.map(v => v.campeonato))]
 
       const results: CampeonatoRanking[] = []
-      for (const { campeonato, modalidade } of unique.values()) {
-        const { data } = await supabase.rpc('nm_ranking', { p_campeonato: campeonato, p_modalidade: modalidade })
+      for (const campeonato of unique) {
+        const { data } = await supabase.rpc('nm_ranking_simples', { p_campeonato: campeonato })
         if (data && data.length > 0) {
-          results.push({ campeonato, modalidade, ranking: data })
+          results.push({ campeonato, ranking: data })
         }
       }
 
@@ -100,10 +93,10 @@ export default function RankingPage() {
         ) : (
           <div className="space-y-4">
             {filtered.map(r => (
-              <div key={`${r.campeonato}-${r.modalidade}`} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+              <div key={r.campeonato} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
                 <div className="px-3 py-2 border-b border-[var(--border)] bg-[var(--bg-card-hover)]">
                   <p className="text-xs font-semibold truncate">{r.campeonato}</p>
-                  <p className="text-[10px] text-[var(--accent)]">{r.modalidade === 'marcha' ? 'Votacao Marcha' : 'Votacao Categoria'}</p>
+                  <p className="text-[10px] text-[var(--accent)]">{r.ranking.reduce((s, a) => s + Number(a.total_votos), 0)} votos</p>
                 </div>
                 <div className="p-2 space-y-1">
                   {r.ranking.slice(0, 3).map((a, i) => (
@@ -115,10 +108,11 @@ export default function RankingPage() {
                       <img src={MEDAL_IMGS[i]} alt={`${i+1}o lugar`} className="w-10 h-10 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-semibold truncate">{a.nome}</p>
-                        <p className="text-[10px] text-[var(--text-muted)]">{a.haras || ''} · {a.total_votos} votos</p>
+                        <p className="text-[10px] text-[var(--text-muted)]">{a.haras || ''}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold text-[var(--accent)]">{a.pontos}pts</p>
+                        <p className="text-sm font-bold text-[var(--accent)]">{a.total_votos}</p>
+                        <p className="text-[9px] text-[var(--text-muted)]">votos</p>
                       </div>
                     </Link>
                   ))}
