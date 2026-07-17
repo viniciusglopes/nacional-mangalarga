@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase, Animal } from '@/lib/supabase'
 import Link from 'next/link'
 
@@ -8,11 +9,15 @@ const MARCHAS = ['Todas', 'MB', 'MP'] as const
 const PER_PAGE = 30
 
 export default function Home() {
+  const searchParams = useSearchParams()
+  const campeonatoParam = searchParams.get('campeonato')
+
   const [search, setSearch] = useState('')
   const [marcha, setMarcha] = useState<string>('Todas')
   const [castrado, setCastrado] = useState(false)
   const [categoria, setCategoria] = useState<string>('Todas')
   const [categorias, setCategorias] = useState<string[]>([])
+  const [campeonatoFilter, setCampeonatoFilter] = useState<string | null>(campeonatoParam)
   const [animals, setAnimals] = useState<Animal[]>([])
   const [loading, setLoading] = useState(false)
   const [total, setTotal] = useState(0)
@@ -20,6 +25,10 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  useEffect(() => {
+    setCampeonatoFilter(campeonatoParam)
+  }, [campeonatoParam])
 
   useEffect(() => {
     async function loadCategorias() {
@@ -53,6 +62,7 @@ export default function Home() {
     if (marcha !== 'Todas') query = query.eq('tipo_marcha', marcha)
     if (castrado) query = query.ilike('categoria', '%Castrado%')
     if (categoria !== 'Todas') query = query.eq('categoria', categoria)
+    if (campeonatoFilter) query = query.eq('campeonato', campeonatoFilter)
 
     const { data, count, error } = await query
 
@@ -66,7 +76,7 @@ export default function Home() {
       setHasMore(data.length === PER_PAGE)
     }
     setLoading(false)
-  }, [search, marcha, castrado, categoria])
+  }, [search, marcha, castrado, categoria, campeonatoFilter])
 
   useEffect(() => {
     setPage(0)
@@ -76,7 +86,7 @@ export default function Home() {
       fetchAnimals(0, true)
     }, 300)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [search, marcha, castrado, categoria, fetchAnimals])
+  }, [search, marcha, castrado, categoria, campeonatoFilter, fetchAnimals])
 
   useEffect(() => {
     if (!sentinelRef.current || !hasMore) return
@@ -107,6 +117,15 @@ export default function Home() {
               <span className="text-xs text-[var(--text-muted)]">{total} animais</span>
             </div>
           </div>
+
+          {campeonatoFilter && (
+            <div className="flex items-center gap-2 mb-3 bg-[var(--accent)]/10 border border-[var(--accent)]/30 rounded-lg px-3 py-2">
+              <span className="text-xs text-[var(--accent)] flex-1 truncate">{campeonatoFilter}</span>
+              <Link href="/" className="text-[var(--text-muted)] hover:text-white flex-shrink-0">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </Link>
+            </div>
+          )}
 
           <div className="relative mb-3">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
