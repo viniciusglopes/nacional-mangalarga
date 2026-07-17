@@ -371,21 +371,20 @@ function HomeContent() {
                     }`}>
                       {animal.tipo_campeonato === 'Exclusivamente Marcha' ? 'Excl. Marcha' : 'Convencional'}
                     </span>
-                    {animal.num_catalogo && (
-                      <span className="text-[10px] text-[var(--text-muted)] font-mono">#{animal.num_catalogo}</span>
-                    )}
                   </div>
                   <h3 className="text-sm font-semibold truncate">{animal.nome}</h3>
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5">{animal.categoria}</p>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-[10px] text-[var(--text-muted)] font-mono">Reg. {animal.registro}</p>
-                  {animal.haras && (
-                    <p className="text-[10px] text-[var(--accent)] mt-0.5 max-w-[120px] truncate">{animal.haras}</p>
-                  )}
-                </div>
+                {animal.num_catalogo && (
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-[10px] text-[var(--text-muted)] uppercase">Catalogo</p>
+                    <p className="text-2xl font-bold text-[var(--accent)] leading-none">{animal.num_catalogo}</p>
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-3 mt-2 text-[10px] text-[var(--text-muted)]">
+                <span className="font-mono">Reg. {animal.registro}</span>
+                {animal.haras && <span className="text-[var(--accent)] truncate">{animal.haras}</span>}
                 <span className="truncate">Pai: {animal.pai || '—'}</span>
                 <span className="truncate">Mae: {animal.mae || '—'}</span>
               </div>
