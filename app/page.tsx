@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase, Animal } from '@/lib/supabase'
 import Link from 'next/link'
@@ -9,6 +9,14 @@ const MARCHAS = ['Todas', 'MB', 'MP'] as const
 const PER_PAGE = 30
 
 export default function Home() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" /></div>}>
+      <HomeContent />
+    </Suspense>
+  )
+}
+
+function HomeContent() {
   const searchParams = useSearchParams()
   const campeonatoParam = searchParams.get('campeonato')
 
