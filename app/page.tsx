@@ -183,6 +183,7 @@ function HomeContent() {
 
   return (
     <main className="flex flex-col min-h-screen">
+      <Banner posicao="header_topo" />
       <header className="sticky top-0 z-50 bg-[#0f0f1a]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 pt-4 pb-3">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3 mb-3">
@@ -368,6 +369,7 @@ function HomeContent() {
           </Link>
         </div>
       </nav>
+      <Banner posicao="nav_rodape" />
     </main>
   )
 }

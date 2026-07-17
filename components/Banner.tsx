@@ -14,7 +14,7 @@ type BannerData = {
   ordem: number
 }
 
-export default function Banner({ posicao }: { posicao: 'topo' | 'rodape' }) {
+export default function Banner({ posicao }: { posicao: 'topo' | 'rodape' | 'header_topo' | 'nav_rodape' }) {
   const [banners, setBanners] = useState<BannerData[]>([])
 
   useEffect(() => {
