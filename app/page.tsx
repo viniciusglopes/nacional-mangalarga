@@ -26,14 +26,9 @@ export default function Home() {
 
   useEffect(() => {
     async function loadCategorias() {
-      const { data } = await supabase
-        .from('nm_animais')
-        .select('categoria')
-        .order('categoria')
-        .limit(2000)
+      const { data } = await supabase.rpc('nm_distinct_categorias')
       if (data) {
-        const unique = [...new Set(data.map(d => d.categoria).filter(Boolean))] as string[]
-        setCategorias(unique)
+        setCategorias(data.map((d: { categoria: string }) => d.categoria).filter(Boolean))
       }
     }
     loadCategorias()
