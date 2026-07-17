@@ -28,6 +28,7 @@ export type Animal = {
   cidade: string | null
   uf: string | null
   destaque: boolean
+  tambem_excl_marcha: boolean
 }
 
 export type Campeonato = {

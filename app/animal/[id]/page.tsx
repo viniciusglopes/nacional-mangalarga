@@ -100,7 +100,7 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
         <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className={`text-xs font-bold px-2 py-1 rounded ${
                   animal.tipo_marcha === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
                 }`}>
@@ -113,6 +113,11 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
                 }`}>
                   {animal.tipo_campeonato === 'Exclusivamente Marcha' ? 'Excl. Marcha' : 'Convencional'}
                 </span>
+                {animal.tambem_excl_marcha && (
+                  <span className="text-xs font-bold px-2 py-1 rounded bg-amber-500/30 text-amber-300">
+                    Excl. Marcha
+                  </span>
+                )}
               </div>
               <h2 className="text-xl font-bold mb-1">{animal.nome}</h2>
               <p className="text-sm text-[var(--text-secondary)]">{animal.campeonato}</p>

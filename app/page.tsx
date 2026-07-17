@@ -300,7 +300,7 @@ function HomeContent() {
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                       animal.tipo_marcha === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
                     }`}>
@@ -313,6 +313,11 @@ function HomeContent() {
                     }`}>
                       {animal.tipo_campeonato === 'Exclusivamente Marcha' ? 'Excl. Marcha' : 'Convencional'}
                     </span>
+                    {animal.tambem_excl_marcha && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-300">
+                        Excl. Marcha
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-sm font-semibold truncate">{animal.nome}</h3>
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5">{animal.categoria}</p>
