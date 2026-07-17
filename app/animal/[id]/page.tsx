@@ -83,7 +83,7 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
           </Link>
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-bold truncate">{animal.nome}</h1>
-            <p className="text-[10px] text-[var(--text-muted)]">{animal.categoria}</p>
+            <p className="text-[10px] text-[var(--text-muted)]">{animal.categoria}{animal.tipo_campeonato && animal.tipo_campeonato !== 'Castrado' ? ` · ${animal.tipo_campeonato === 'Exclusivamente Marcha' ? 'Excl. Marcha' : animal.tipo_campeonato}` : ''}</p>
           </div>
           <button onClick={toggleFav} className="p-2">
             <svg className={`w-5 h-5 ${isFav ? 'text-red-400 fill-red-400' : 'text-[var(--text-muted)]'}`} viewBox="0 0 24 24" stroke="currentColor" fill={isFav ? 'currentColor' : 'none'}>

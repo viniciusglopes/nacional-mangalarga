@@ -170,7 +170,12 @@ export default function Home() {
                     )}
                   </div>
                   <h3 className="text-sm font-semibold truncate">{animal.nome}</h3>
-                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">{animal.categoria}</p>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                    {animal.categoria}
+                    {animal.tipo_campeonato && animal.tipo_campeonato !== 'Castrado' && (
+                      <span className="text-[var(--text-muted)]"> · {animal.tipo_campeonato === 'Exclusivamente Marcha' ? 'Excl. Marcha' : animal.tipo_campeonato}</span>
+                    )}
+                  </p>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-[10px] text-[var(--text-muted)] font-mono">Reg. {animal.registro}</p>
