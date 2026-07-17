@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect, useCallback, useRef } from 'react'
+import { Suspense, useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase, Animal } from '@/lib/supabase'
 import Link from 'next/link'
@@ -20,6 +20,8 @@ const selectStyle = {
   backgroundPosition: 'right 12px center',
 }
 
+type Suggestion = { label: string; type: 'haras' | 'criador' | 'expositor'; value: string }
+
 export default function Home() {
   return (
     <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" /></div>}>
@@ -34,7 +36,6 @@ function HomeContent() {
 
   const [search, setSearch] = useState('')
   const [marcha, setMarcha] = useState<string>('Todas')
-  const [castrado, setCastrado] = useState(false)
   const [categoria, setCategoria] = useState<string>('Todas')
   const [criador, setCriador] = useState<string>('Todos')
   const [expositor, setExpositor] = useState<string>('Todos')
@@ -50,8 +51,11 @@ function HomeContent() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [activeFilter, setActiveFilter] = useState<{ type: string; value: string } | null>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const searchRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setCampeonatoFilter(campeonatoParam)
@@ -73,8 +77,36 @@ function HomeContent() {
     loadFilters()
   }, [])
 
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const suggestions = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (q.length < 2) return []
+    const results: Suggestion[] = []
+    for (const h of harasList) {
+      if (h.toLowerCase().includes(q)) results.push({ label: h, type: 'haras', value: h })
+      if (results.length >= 5) break
+    }
+    for (const c of criadores) {
+      if (c.toLowerCase().includes(q)) results.push({ label: c, type: 'criador', value: c })
+      if (results.length >= 10) break
+    }
+    for (const e of expositores) {
+      if (e.toLowerCase().includes(q)) results.push({ label: e, type: 'expositor', value: e })
+      if (results.length >= 15) break
+    }
+    return results.slice(0, 8)
+  }, [search, harasList, criadores, expositores])
+
   const activeFilterCount = [
-    categoria !== 'Todas',
     criador !== 'Todos',
     expositor !== 'Todos',
     haras !== 'Todos',
@@ -91,7 +123,11 @@ function HomeContent() {
       .order('id_catalogo', { ascending: true })
       .range(from, to)
 
-    if (search.trim()) {
+    if (activeFilter) {
+      if (activeFilter.type === 'haras') query = query.eq('haras', activeFilter.value)
+      else if (activeFilter.type === 'criador') query = query.eq('criador', activeFilter.value)
+      else if (activeFilter.type === 'expositor') query = query.eq('expositor', activeFilter.value)
+    } else if (search.trim()) {
       const s = search.trim()
       if (/^\d+$/.test(s)) {
         query = query.or(`registro.eq.${s},chip.eq.${s},num_catalogo.eq.${s}`)
@@ -100,11 +136,10 @@ function HomeContent() {
       }
     }
     if (marcha !== 'Todas') query = query.eq('tipo_marcha', marcha)
-    if (castrado) query = query.ilike('categoria', '%Castrado%')
     if (categoria !== 'Todas') query = query.eq('categoria', categoria)
-    if (criador !== 'Todos') query = query.eq('criador', criador)
-    if (expositor !== 'Todos') query = query.eq('expositor', expositor)
-    if (haras !== 'Todos') query = query.eq('haras', haras)
+    if (criador !== 'Todos' && !activeFilter) query = query.eq('criador', criador)
+    if (expositor !== 'Todos' && !activeFilter) query = query.eq('expositor', expositor)
+    if (haras !== 'Todos' && !activeFilter) query = query.eq('haras', haras)
     if (campeonatoFilter) query = query.eq('campeonato', campeonatoFilter)
 
     const { data, count, error } = await query
@@ -119,7 +154,7 @@ function HomeContent() {
       setHasMore(data.length === PER_PAGE)
     }
     setLoading(false)
-  }, [search, marcha, castrado, categoria, criador, expositor, haras, campeonatoFilter])
+  }, [search, marcha, categoria, criador, expositor, haras, campeonatoFilter, activeFilter])
 
   useEffect(() => {
     setPage(0)
@@ -129,7 +164,7 @@ function HomeContent() {
       fetchAnimals(0, true)
     }, 300)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [search, marcha, castrado, categoria, criador, expositor, haras, campeonatoFilter, fetchAnimals])
+  }, [search, marcha, categoria, criador, expositor, haras, campeonatoFilter, activeFilter, fetchAnimals])
 
   useEffect(() => {
     if (!sentinelRef.current || !hasMore) return
@@ -143,6 +178,21 @@ function HomeContent() {
     observer.observe(sentinelRef.current)
     return () => observer.disconnect()
   }, [page, loading, hasMore, fetchAnimals])
+
+  function selectSuggestion(s: Suggestion) {
+    setActiveFilter({ type: s.type, value: s.value })
+    setSearch(s.label)
+    setShowSuggestions(false)
+  }
+
+  function clearSearch() {
+    setSearch('')
+    setActiveFilter(null)
+    setShowSuggestions(false)
+  }
+
+  const typeLabel = { haras: 'Haras', criador: 'Criador', expositor: 'Expositor' }
+  const typeColor = { haras: 'text-[var(--accent)]', criador: 'text-blue-400', expositor: 'text-purple-400' }
 
   return (
     <main className="flex flex-col min-h-screen">
@@ -171,26 +221,55 @@ function HomeContent() {
             </div>
           )}
 
-          <div className="relative mb-3">
+          {/* Search with autocomplete */}
+          <div className="relative mb-3" ref={searchRef}>
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
               type="text"
-              placeholder="Buscar por nome, registro ou chip..."
+              placeholder="Buscar animal, haras, criador, expositor..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => { setSearch(e.target.value); setActiveFilter(null); setShowSuggestions(true) }}
+              onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true) }}
               className="w-full pl-10 pr-10 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
             />
-            {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-white">
+            {(search || activeFilter) && (
+              <button onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-white">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
+            )}
+
+            {/* Active filter badge */}
+            {activeFilter && (
+              <div className="absolute left-10 top-1/2 -translate-y-1/2 pointer-events-none">
+                <span className={`text-[9px] font-bold uppercase ${typeColor[activeFilter.type as keyof typeof typeColor]}`}>
+                  {typeLabel[activeFilter.type as keyof typeof typeLabel]}:
+                </span>
+              </div>
+            )}
+
+            {/* Suggestions dropdown */}
+            {showSuggestions && suggestions.length > 0 && !activeFilter && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl overflow-hidden shadow-2xl z-50">
+                {suggestions.map((s, i) => (
+                  <button
+                    key={`${s.type}-${s.value}-${i}`}
+                    onClick={() => selectSuggestion(s)}
+                    className="w-full px-4 py-2.5 text-left hover:bg-[var(--bg-card-hover)] transition-colors flex items-center gap-3 border-b border-[var(--border)] last:border-0"
+                  >
+                    <span className={`text-[9px] font-bold uppercase w-16 flex-shrink-0 ${typeColor[s.type]}`}>
+                      {typeLabel[s.type]}
+                    </span>
+                    <span className="text-sm truncate">{s.label}</span>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
           <div className="space-y-2">
-            {/* Row 1: Marcha + Castrado + Filtros toggle */}
+            {/* Row 1: Marcha + Filtros toggle */}
             <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
               <div className="flex gap-1 bg-[var(--bg-card)] rounded-lg p-0.5 flex-shrink-0">
                 {MARCHAS.map(m => (
@@ -208,16 +287,6 @@ function HomeContent() {
                 ))}
               </div>
               <button
-                onClick={() => setCastrado(!castrado)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex-shrink-0 border ${
-                  castrado
-                    ? 'bg-[var(--accent)] text-black border-[var(--accent)]'
-                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-white'
-                }`}
-              >
-                Castrado
-              </button>
-              <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex-shrink-0 border flex items-center gap-1 ${
                   showFilters || activeFilterCount > 0
@@ -230,16 +299,17 @@ function HomeContent() {
               </button>
             </div>
 
-            {/* Expandable filters */}
+            {/* Categoria always visible */}
+            <select value={categoria} onChange={e => setCategoria(e.target.value)}
+              className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
+              style={selectStyle}>
+              <option value="Todas">Todas as categorias</option>
+              {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+
+            {/* Expandable filters (Criador, Expositor, Haras dropdowns) */}
             {showFilters && (
               <div className="space-y-2 pt-1">
-                <select value={categoria} onChange={e => setCategoria(e.target.value)}
-                  className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
-                  style={selectStyle}>
-                  <option value="Todas">Todas as categorias</option>
-                  {categorias.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-
                 <select value={criador} onChange={e => setCriador(e.target.value)}
                   className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
                   style={selectStyle}>
@@ -263,7 +333,7 @@ function HomeContent() {
 
                 {activeFilterCount > 0 && (
                   <button
-                    onClick={() => { setCategoria('Todas'); setCriador('Todos'); setExpositor('Todos'); setHaras('Todos') }}
+                    onClick={() => { setCriador('Todos'); setExpositor('Todos'); setHaras('Todos') }}
                     className="text-xs text-[var(--accent)] hover:underline"
                   >
                     Limpar filtros
@@ -315,7 +385,7 @@ function HomeContent() {
               </div>
               <div className="flex items-center gap-3 mt-2 text-[10px] text-[var(--text-muted)]">
                 <span className="truncate">Pai: {animal.pai || '—'}</span>
-                <span className="truncate">Mãe: {animal.mae || '—'}</span>
+                <span className="truncate">Mae: {animal.mae || '—'}</span>
               </div>
             </Link>
           ))}
