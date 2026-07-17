@@ -5,15 +5,12 @@ import { supabase, Animal } from '@/lib/supabase'
 import Link from 'next/link'
 
 const MARCHAS = ['Todas', 'MB', 'MP'] as const
-const CAMPEONATOS = ['Todos', 'Convencional', 'Excl. Marcha'] as const
-const CAMP_MAP: Record<string, string> = { 'Excl. Marcha': 'Exclusivamente Marcha' }
 const PER_PAGE = 30
 
 export default function Home() {
   const [search, setSearch] = useState('')
   const [marcha, setMarcha] = useState<string>('Todas')
   const [castrado, setCastrado] = useState(false)
-  const [campeonato, setCampeonato] = useState<string>('Todos')
   const [categoria, setCategoria] = useState<string>('Todas')
   const [categorias, setCategorias] = useState<string[]>([])
   const [animals, setAnimals] = useState<Animal[]>([])
@@ -55,8 +52,6 @@ export default function Home() {
     }
     if (marcha !== 'Todas') query = query.eq('tipo_marcha', marcha)
     if (castrado) query = query.ilike('categoria', '%Castrado%')
-    const campReal = CAMP_MAP[campeonato] || campeonato
-    if (campReal !== 'Todos') query = query.eq('tipo_campeonato', campReal)
     if (categoria !== 'Todas') query = query.eq('categoria', categoria)
 
     const { data, count, error } = await query
@@ -71,7 +66,7 @@ export default function Home() {
       setHasMore(data.length === PER_PAGE)
     }
     setLoading(false)
-  }, [search, marcha, castrado, campeonato, categoria])
+  }, [search, marcha, castrado, categoria])
 
   useEffect(() => {
     setPage(0)
@@ -81,7 +76,7 @@ export default function Home() {
       fetchAnimals(0, true)
     }, 300)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [search, marcha, castrado, campeonato, categoria, fetchAnimals])
+  }, [search, marcha, castrado, categoria, fetchAnimals])
 
   useEffect(() => {
     if (!sentinelRef.current || !hasMore) return
@@ -161,22 +156,7 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Row 2: Campeonato */}
-            <div className="flex gap-1 bg-[var(--bg-card)] rounded-lg p-0.5 w-fit">
-              {CAMPEONATOS.map(c => (
-                <button
-                  key={c}
-                  onClick={() => setCampeonato(c)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
-                    campeonato === c ? 'bg-[var(--accent)] text-black' : 'text-[var(--text-secondary)] hover:text-white'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-
-            {/* Row 3: Categoria dropdown */}
+            {/* Row 2: Categoria dropdown */}
             <select
               value={categoria}
               onChange={e => setCategoria(e.target.value)}
