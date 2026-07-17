@@ -10,7 +10,7 @@ type DailyView = { dia: string; total: number }
 export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null)
   const [admin, setAdmin] = useState<Admin | null>(null)
-  const [tab, setTab] = useState<'banners' | 'analytics' | 'admins'>('analytics')
+  const [tab, setTab] = useState<'banners' | 'analytics' | 'admins' | 'leads'>('analytics')
 
   useEffect(() => {
     const t = localStorage.getItem('nm_admin_token')
@@ -49,21 +49,22 @@ export default function AdminPage() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-4">
-        <div className="flex gap-2 mb-6">
-          {(['analytics', 'banners', 'admins'] as const).map(t => (
+        <div className="flex gap-2 mb-6 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          {(['analytics', 'leads', 'banners', 'admins'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${
                 tab === t ? 'bg-[var(--accent)] text-black' : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white'
               }`}
             >
-              {t === 'analytics' ? 'Analytics' : t === 'banners' ? 'Banners' : 'Admins'}
+              {t === 'analytics' ? 'Analytics' : t === 'leads' ? 'Leads' : t === 'banners' ? 'Banners' : 'Admins'}
             </button>
           ))}
         </div>
 
         {tab === 'analytics' && <AnalyticsPanel token={token} />}
+        {tab === 'leads' && <LeadsPanel token={token} />}
         {tab === 'banners' && <BannersPanel token={token} />}
         {tab === 'admins' && <AdminsPanel token={token} />}
       </div>
@@ -116,6 +117,92 @@ function LoginForm({ onLogin }: { onLogin: (token: string, admin: Admin) => void
         </button>
       </form>
     </main>
+  )
+}
+
+type Lead = { id: number; nome: string; email: string | null; telefone: string | null; created_at: string; total_votos: number }
+
+function LeadsPanel({ token }: { token: string }) {
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      const res = await fetch('/api/admin/leads', { headers: { 'Authorization': `Bearer ${token}` } })
+      const data = await res.json()
+      setLeads(data || [])
+      setLoading(false)
+    }
+    load()
+  }, [token])
+
+  function exportCSV() {
+    const header = 'Nome,Email,Telefone,Votos,Data Cadastro'
+    const rows = leads.map(l =>
+      `"${l.nome}","${l.email || ''}","${l.telefone || ''}",${l.total_votos},"${new Date(l.created_at).toLocaleDateString('pt-BR')}"`
+    )
+    const csv = [header, ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `leads_nacional_mm_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  if (loading) return <div className="text-center py-8"><div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" /></div>
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Usuarios Cadastrados ({leads.length})</h3>
+        {leads.length > 0 && (
+          <button onClick={exportCSV} className="px-3 py-1.5 bg-[var(--accent)] text-black rounded-lg text-xs font-semibold">
+            Exportar CSV
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
+          <p className="text-[10px] text-[var(--text-muted)] uppercase">Total</p>
+          <p className="text-2xl font-bold text-[var(--accent)]">{leads.length}</p>
+        </div>
+        <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
+          <p className="text-[10px] text-[var(--text-muted)] uppercase">Com Email</p>
+          <p className="text-2xl font-bold text-blue-400">{leads.filter(l => l.email).length}</p>
+        </div>
+        <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
+          <p className="text-[10px] text-[var(--text-muted)] uppercase">Com Telefone</p>
+          <p className="text-2xl font-bold text-green-400">{leads.filter(l => l.telefone).length}</p>
+        </div>
+      </div>
+
+      {leads.length === 0 ? (
+        <p className="text-sm text-[var(--text-muted)] text-center py-4">Nenhum usuario cadastrado ainda</p>
+      ) : (
+        <div className="space-y-2">
+          {leads.map(l => (
+            <div key={l.id} className="bg-[var(--bg-card)] rounded-xl p-3 border border-[var(--border)]">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">{l.nome}</p>
+                  <p className="text-[10px] text-[var(--text-muted)]">
+                    {l.email && <span className="mr-3">{l.email}</span>}
+                    {l.telefone && <span>{l.telefone}</span>}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-[var(--accent)]">{l.total_votos} votos</p>
+                  <p className="text-[10px] text-[var(--text-muted)]">{new Date(l.created_at).toLocaleDateString('pt-BR')}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
