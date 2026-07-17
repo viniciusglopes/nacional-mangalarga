@@ -191,15 +191,11 @@ export default function Home() {
                     {animal.num_catalogo && (
                       <span className="text-[10px] text-[var(--text-muted)] font-mono">#{animal.num_catalogo}</span>
                     )}
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                      animal.tipo_campeonato === 'Exclusivamente Marcha'
-                        ? 'bg-amber-500/20 text-amber-400'
-                        : animal.tipo_campeonato === 'Castrado'
-                        ? 'bg-emerald-500/20 text-emerald-400'
-                        : 'bg-white/10 text-[var(--text-secondary)]'
-                    }`}>
-                      {animal.tipo_campeonato === 'Exclusivamente Marcha' ? 'Excl. Marcha' : animal.tipo_campeonato}
-                    </span>
+                    {animal.tipo_campeonato === 'Exclusivamente Marcha' && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-300">
+                        Excl. Marcha
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-sm font-semibold truncate">{animal.nome}</h3>
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5">{animal.categoria}</p>
