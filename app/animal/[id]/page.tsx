@@ -138,6 +138,7 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
         </div>
 
         {/* Genealogy */}
+        {(animal.pai || animal.mae) && (
         <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
           <h3 className="text-xs font-semibold text-[var(--accent)] uppercase tracking-wide mb-3">Genealogia</h3>
           <div className="flex gap-2">
@@ -145,6 +146,7 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
             <GenealogyCard label="Mae" nome={animal.mae} registro={animal.mae_registro} />
           </div>
         </div>
+        )}
 
         {/* Owner Info */}
         <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
