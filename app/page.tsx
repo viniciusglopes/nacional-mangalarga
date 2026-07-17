@@ -5,14 +5,17 @@ import { supabase, Animal } from '@/lib/supabase'
 import Link from 'next/link'
 
 const MARCHAS = ['Todas', 'MB', 'MP'] as const
-const TIPOS = ['Todos', 'Convencional', 'Castrado', 'Excl. Marcha'] as const
-const TIPO_MAP: Record<string, string> = { 'Excl. Marcha': 'Exclusivamente Marcha' }
+const CAMPEONATOS = ['Todos', 'Convencional', 'Excl. Marcha'] as const
+const CAMP_MAP: Record<string, string> = { 'Excl. Marcha': 'Exclusivamente Marcha' }
 const PER_PAGE = 30
 
 export default function Home() {
   const [search, setSearch] = useState('')
   const [marcha, setMarcha] = useState<string>('Todas')
-  const [tipo, setTipo] = useState<string>('Todos')
+  const [castrado, setCastrado] = useState(false)
+  const [campeonato, setCampeonato] = useState<string>('Todos')
+  const [categoria, setCategoria] = useState<string>('Todas')
+  const [categorias, setCategorias] = useState<string[]>([])
   const [animals, setAnimals] = useState<Animal[]>([])
   const [loading, setLoading] = useState(false)
   const [total, setTotal] = useState(0)
@@ -20,6 +23,20 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  useEffect(() => {
+    async function loadCategorias() {
+      const { data } = await supabase
+        .from('nm_animais')
+        .select('categoria')
+        .order('categoria')
+      if (data) {
+        const unique = [...new Set(data.map(d => d.categoria).filter(Boolean))] as string[]
+        setCategorias(unique)
+      }
+    }
+    loadCategorias()
+  }, [])
 
   const fetchAnimals = useCallback(async (pageNum: number, reset: boolean) => {
     setLoading(true)
@@ -41,8 +58,10 @@ export default function Home() {
       }
     }
     if (marcha !== 'Todas') query = query.eq('tipo_marcha', marcha)
-    const tipoReal = TIPO_MAP[tipo] || tipo
-    if (tipoReal !== 'Todos') query = query.eq('tipo_campeonato', tipoReal)
+    if (castrado) query = query.ilike('categoria', '%Castrado%')
+    const campReal = CAMP_MAP[campeonato] || campeonato
+    if (campReal !== 'Todos') query = query.eq('tipo_campeonato', campReal)
+    if (categoria !== 'Todas') query = query.eq('categoria', categoria)
 
     const { data, count, error } = await query
 
@@ -56,7 +75,7 @@ export default function Home() {
       setHasMore(data.length === PER_PAGE)
     }
     setLoading(false)
-  }, [search, marcha, tipo])
+  }, [search, marcha, castrado, campeonato, categoria])
 
   useEffect(() => {
     setPage(0)
@@ -66,7 +85,7 @@ export default function Home() {
       fetchAnimals(0, true)
     }, 300)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [search, marcha, tipo, fetchAnimals])
+  }, [search, marcha, castrado, campeonato, categoria, fetchAnimals])
 
   useEffect(() => {
     if (!sentinelRef.current || !hasMore) return
@@ -116,35 +135,63 @@ export default function Home() {
             )}
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            <div className="flex gap-1 bg-[var(--bg-card)] rounded-lg p-0.5 flex-shrink-0">
-              {MARCHAS.map(m => (
-                <button
-                  key={m}
-                  onClick={() => setMarcha(m)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    marcha === m
-                      ? m === 'MB' ? 'bg-[var(--mb-color)] text-white' : m === 'MP' ? 'bg-[var(--mp-color)] text-white' : 'bg-[var(--accent)] text-black'
-                      : 'text-[var(--text-secondary)] hover:text-white'
-                  }`}
-                >
-                  {m}
-                </button>
-              ))}
+          <div className="space-y-2">
+            {/* Row 1: Marcha + Castrado */}
+            <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              <div className="flex gap-1 bg-[var(--bg-card)] rounded-lg p-0.5 flex-shrink-0">
+                {MARCHAS.map(m => (
+                  <button
+                    key={m}
+                    onClick={() => setMarcha(m)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      marcha === m
+                        ? m === 'MB' ? 'bg-[var(--mb-color)] text-white' : m === 'MP' ? 'bg-[var(--mp-color)] text-white' : 'bg-[var(--accent)] text-black'
+                        : 'text-[var(--text-secondary)] hover:text-white'
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setCastrado(!castrado)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex-shrink-0 border ${
+                  castrado
+                    ? 'bg-[var(--accent)] text-black border-[var(--accent)]'
+                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border)] hover:text-white'
+                }`}
+              >
+                Castrado
+              </button>
             </div>
-            <div className="flex gap-1 bg-[var(--bg-card)] rounded-lg p-0.5 flex-shrink-0">
-              {TIPOS.map(t => (
+
+            {/* Row 2: Campeonato */}
+            <div className="flex gap-1 bg-[var(--bg-card)] rounded-lg p-0.5 w-fit">
+              {CAMPEONATOS.map(c => (
                 <button
-                  key={t}
-                  onClick={() => setTipo(t)}
+                  key={c}
+                  onClick={() => setCampeonato(c)}
                   className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
-                    tipo === t ? 'bg-[var(--accent)] text-black' : 'text-[var(--text-secondary)] hover:text-white'
+                    campeonato === c ? 'bg-[var(--accent)] text-black' : 'text-[var(--text-secondary)] hover:text-white'
                   }`}
                 >
-                  {t}
+                  {c}
                 </button>
               ))}
             </div>
+
+            {/* Row 3: Categoria dropdown */}
+            <select
+              value={categoria}
+              onChange={e => setCategoria(e.target.value)}
+              className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+            >
+              <option value="Todas">Todas as categorias</option>
+              {categorias.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </div>
         </div>
       </header>
@@ -168,14 +215,18 @@ export default function Home() {
                     {animal.num_catalogo && (
                       <span className="text-[10px] text-[var(--text-muted)] font-mono">#{animal.num_catalogo}</span>
                     )}
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                      animal.tipo_campeonato === 'Exclusivamente Marcha'
+                        ? 'bg-amber-500/20 text-amber-400'
+                        : animal.tipo_campeonato === 'Castrado'
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : 'bg-white/10 text-[var(--text-secondary)]'
+                    }`}>
+                      {animal.tipo_campeonato === 'Exclusivamente Marcha' ? 'Excl. Marcha' : animal.tipo_campeonato}
+                    </span>
                   </div>
                   <h3 className="text-sm font-semibold truncate">{animal.nome}</h3>
-                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                    {animal.categoria}
-                    {animal.tipo_campeonato && animal.tipo_campeonato !== 'Castrado' && (
-                      <span className="text-[var(--text-muted)]"> · {animal.tipo_campeonato === 'Exclusivamente Marcha' ? 'Excl. Marcha' : animal.tipo_campeonato}</span>
-                    )}
-                  </p>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">{animal.categoria}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-[10px] text-[var(--text-muted)] font-mono">Reg. {animal.registro}</p>
