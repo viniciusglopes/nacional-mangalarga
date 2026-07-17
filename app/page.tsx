@@ -364,13 +364,15 @@ function HomeContent() {
                     }`}>
                       {animal.tipo_marcha === 'MB' ? 'M. Batida' : 'M. Picada'}
                     </span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      animal.tipo_campeonato === 'Exclusivamente Marcha'
+                        ? 'bg-amber-500/30 text-amber-300'
+                        : 'bg-green-500/20 text-green-400'
+                    }`}>
+                      {animal.tipo_campeonato === 'Exclusivamente Marcha' ? 'Excl. Marcha' : 'Convencional'}
+                    </span>
                     {animal.num_catalogo && (
                       <span className="text-[10px] text-[var(--text-muted)] font-mono">#{animal.num_catalogo}</span>
-                    )}
-                    {animal.tipo_campeonato === 'Exclusivamente Marcha' && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-300">
-                        Excl. Marcha
-                      </span>
                     )}
                   </div>
                   <h3 className="text-sm font-semibold truncate">{animal.nome}</h3>

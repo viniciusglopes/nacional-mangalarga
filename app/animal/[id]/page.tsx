@@ -106,11 +106,13 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
                 }`}>
                   {animal.tipo_marcha === 'MB' ? 'Marcha Batida' : 'Marcha Picada'}
                 </span>
-                {animal.tipo_campeonato === 'Exclusivamente Marcha' && (
-                  <span className="text-xs font-bold px-2 py-1 rounded bg-amber-500/30 text-amber-300">
-                    Excl. Marcha
-                  </span>
-                )}
+                <span className={`text-xs font-bold px-2 py-1 rounded ${
+                  animal.tipo_campeonato === 'Exclusivamente Marcha'
+                    ? 'bg-amber-500/30 text-amber-300'
+                    : 'bg-green-500/20 text-green-400'
+                }`}>
+                  {animal.tipo_campeonato === 'Exclusivamente Marcha' ? 'Excl. Marcha' : 'Convencional'}
+                </span>
               </div>
               <h2 className="text-xl font-bold mb-1">{animal.nome}</h2>
               <p className="text-sm text-[var(--text-secondary)]">{animal.campeonato}</p>
