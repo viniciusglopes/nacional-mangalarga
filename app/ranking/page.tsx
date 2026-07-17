@@ -1,0 +1,135 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { supabase, RankingAnimal } from '@/lib/supabase'
+import Link from 'next/link'
+import BottomNav from '@/components/BottomNav'
+
+type CampeonatoRanking = {
+  campeonato: string
+  modalidade: string
+  ranking: RankingAnimal[]
+}
+
+const POSICAO_ICONS = ['🥇', '🥈', '🥉']
+
+export default function RankingPage() {
+  const [rankings, setRankings] = useState<CampeonatoRanking[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filterMarcha, setFilterMarcha] = useState<string>('Todas')
+
+  useEffect(() => {
+    async function load() {
+      const { data: votos } = await supabase
+        .from('nm_votos')
+        .select('campeonato, modalidade')
+
+      if (!votos || votos.length === 0) {
+        setRankings([])
+        setLoading(false)
+        return
+      }
+
+      const unique = new Map<string, { campeonato: string; modalidade: string }>()
+      for (const v of votos) {
+        const key = `${v.campeonato}|${v.modalidade}`
+        if (!unique.has(key)) unique.set(key, { campeonato: v.campeonato, modalidade: v.modalidade })
+      }
+
+      const results: CampeonatoRanking[] = []
+      for (const { campeonato, modalidade } of unique.values()) {
+        const { data } = await supabase.rpc('nm_ranking', { p_campeonato: campeonato, p_modalidade: modalidade })
+        if (data && data.length > 0) {
+          results.push({ campeonato, modalidade, ranking: data })
+        }
+      }
+
+      results.sort((a, b) => a.campeonato.localeCompare(b.campeonato))
+      setRankings(results)
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const filtered = filterMarcha === 'Todas'
+    ? rankings
+    : rankings.filter(r => r.campeonato.includes(`- ${filterMarcha} -`))
+
+  return (
+    <main className="flex flex-col min-h-screen">
+      <header className="sticky top-0 z-50 bg-[#0f0f1a]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 py-3">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center gap-3 mb-3">
+            <Link href="/" className="text-[var(--text-muted)] hover:text-white">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            </Link>
+            <h1 className="text-base font-bold">Ranking</h1>
+            <span className="ml-auto text-xs text-[var(--text-muted)]">{filtered.length} categorias com votos</span>
+          </div>
+          <div className="flex gap-1 bg-[var(--bg-card)] rounded-lg p-0.5">
+            {['Todas', 'MB', 'MP'].map(m => (
+              <button
+                key={m}
+                onClick={() => setFilterMarcha(m)}
+                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  filterMarcha === m
+                    ? m === 'MB' ? 'bg-blue-500 text-white' : m === 'MP' ? 'bg-orange-500 text-white' : 'bg-[var(--accent)] text-black'
+                    : 'text-[var(--text-secondary)]'
+                }`}
+              >
+                {m === 'Todas' ? 'Todas' : m === 'MB' ? 'M. Batida' : 'M. Picada'}
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      <div className="flex-1 px-4 py-3 max-w-2xl mx-auto w-full">
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-12 text-[var(--text-muted)]">
+            <svg className="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p className="text-sm">Nenhuma votacao ainda</p>
+            <p className="text-xs mt-1">Vote nos seus favoritos em cada campeonato</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filtered.map(r => (
+              <div key={`${r.campeonato}-${r.modalidade}`} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+                <div className="px-3 py-2 border-b border-[var(--border)] bg-[var(--bg-card-hover)]">
+                  <p className="text-xs font-semibold truncate">{r.campeonato}</p>
+                  <p className="text-[10px] text-[var(--accent)]">{r.modalidade === 'marcha' ? 'Votacao Marcha' : 'Votacao Categoria'}</p>
+                </div>
+                <div className="p-2 space-y-1">
+                  {r.ranking.slice(0, 3).map((a, i) => (
+                    <Link
+                      key={a.id}
+                      href={`/animal/${a.id}`}
+                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--bg-card-hover)] transition-colors"
+                    >
+                      <span className="text-lg flex-shrink-0">{POSICAO_ICONS[i]}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold truncate">{a.nome}</p>
+                        <p className="text-[10px] text-[var(--text-muted)]">{a.haras || ''} · {a.total_votos} votos</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-bold text-[var(--accent)]">{a.pontos}pts</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <BottomNav />
+    </main>
+  )
+}

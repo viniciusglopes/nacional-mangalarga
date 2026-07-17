@@ -4,6 +4,8 @@ import { useState, useEffect, use } from 'react'
 import { supabase, Animal } from '@/lib/supabase'
 import Link from 'next/link'
 import { trackAnimalClick } from '@/components/Analytics'
+import BottomNav from '@/components/BottomNav'
+import VotingPanel from '@/components/VotingPanel'
 
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null
@@ -153,6 +155,9 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
           <InfoRow label="Cidade" value={animal.cidade && animal.uf ? `${animal.cidade} - ${animal.uf}` : animal.cidade} />
         </div>
 
+        {/* Voting */}
+        <VotingPanel campeonato={animal.campeonato} tipoCampeonato={animal.tipo_campeonato} />
+
         {/* Share */}
         <button
           onClick={() => {
@@ -172,23 +177,7 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
         </button>
       </div>
 
-      {/* Bottom Nav */}
-      <nav className="sticky bottom-0 bg-[#0f0f1a]/95 backdrop-blur-sm border-t border-[var(--border)] px-4 py-2">
-        <div className="max-w-2xl mx-auto flex justify-around">
-          <Link href="/" className="flex flex-col items-center gap-0.5 text-[var(--text-muted)] hover:text-white">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            <span className="text-[10px]">Busca</span>
-          </Link>
-          <Link href="/campeonatos" className="flex flex-col items-center gap-0.5 text-[var(--text-muted)] hover:text-white">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
-            <span className="text-[10px]">Campeonatos</span>
-          </Link>
-          <Link href="/favoritos" className="flex flex-col items-center gap-0.5 text-[var(--text-muted)] hover:text-white">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-            <span className="text-[10px]">Favoritos</span>
-          </Link>
-        </div>
-      </nav>
+      <BottomNav />
     </main>
   )
 }
