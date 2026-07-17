@@ -30,6 +30,7 @@ export default function Home() {
         .from('nm_animais')
         .select('categoria')
         .order('categoria')
+        .limit(2000)
       if (data) {
         const unique = [...new Set(data.map(d => d.categoria).filter(Boolean))] as string[]
         setCategorias(unique)
