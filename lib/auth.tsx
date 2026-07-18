@@ -1,18 +1,18 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { supabase, Usuario } from './supabase'
+import { Usuario } from './supabase'
 
 type AuthContextType = {
   user: Usuario | null
-  login: (nome: string, email?: string, telefone?: string) => Promise<string | null>
+  loginDirect: (user: Usuario) => void
   logout: () => void
   loading: boolean
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  login: async () => null,
+  loginDirect: () => {},
   logout: () => {},
   loading: true,
 })
@@ -29,18 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false)
   }, [])
 
-  async function login(nome: string, email?: string, telefone?: string): Promise<string | null> {
-    const { data, error } = await supabase.rpc('nm_user_login', {
-      p_nome: nome,
-      p_email: email || null,
-      p_telefone: telefone || null,
-    })
-    if (error) return error.message
-    if (data?.error) return data.error
-    const u: Usuario = data
+  function loginDirect(u: Usuario) {
     setUser(u)
     localStorage.setItem('nm_user', JSON.stringify(u))
-    return null
   }
 
   function logout() {
@@ -49,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, loginDirect, logout, loading }}>
       {children}
     </AuthContext.Provider>
   )
