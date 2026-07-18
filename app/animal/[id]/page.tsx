@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useMemo } from 'react'
 import { supabase, Animal } from '@/lib/supabase'
 import Link from 'next/link'
 import { trackAnimalClick } from '@/components/Analytics'
 import BottomNav from '@/components/BottomNav'
 import VotingPanel from '@/components/VotingPanel'
+import { getAnimalSchedule, isToday, isPast } from '@/lib/calendario'
 
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null
@@ -49,6 +50,8 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
     setIsFav(favs.includes(Number(id)))
     trackAnimalClick(Number(id))
   }, [id])
+
+  const schedule = useMemo(() => (animal ? getAnimalSchedule(animal) : []), [animal])
 
   function toggleFav() {
     const favs: number[] = JSON.parse(localStorage.getItem('nm_favoritos') || '[]')
@@ -124,6 +127,70 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
               </div>
             )}
           </div>
+        </div>
+
+        {/* Quando entra na pista (vinculo com o calendario pela categoria/campeonato) */}
+        <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
+          <div className="flex items-center gap-2 mb-3">
+            <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <h3 className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Quando entra na pista</h3>
+          </div>
+
+          {schedule.length === 0 ? (
+            <p className="text-xs text-[var(--text-muted)]">
+              Horario ainda nao disponivel para esta categoria. Consulte a{' '}
+              <Link href="/calendario" className="text-[var(--accent)]">programacao completa</Link>.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {schedule.map((s, i) => {
+                const today = isToday(s.date)
+                const past = isPast(s.date)
+                return (
+                  <Link
+                    key={`${s.date}-${i}`}
+                    href="/calendario"
+                    className={`flex items-center gap-3 rounded-lg p-2.5 border transition-all active:scale-[0.98] ${
+                      today ? 'border-[var(--accent)] bg-[var(--accent)]/5' :
+                      past ? 'border-[var(--border)] opacity-60' :
+                      'border-[var(--border)] bg-[var(--bg-primary)]'
+                    }`}
+                  >
+                    <div className={`w-11 h-11 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
+                      today ? 'bg-[var(--accent)] text-black' : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'
+                    }`}>
+                      <span className="text-base font-bold leading-none">{s.date.split('/')[0]}</span>
+                      <span className="text-[9px] font-medium uppercase leading-none mt-0.5">
+                        {parseInt(s.date.split('/')[1]) === 8 ? 'AGO' : 'JUL'}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                          s.kind === 'morfologia' ? 'bg-emerald-500/20 text-emerald-400' :
+                          s.kind === 'marcha' ? 'bg-purple-500/20 text-purple-400' :
+                          'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          {s.kind === 'morfologia' ? 'Morfologia' : s.kind === 'marcha' ? 'Marcha' : 'Campeonato'}
+                        </span>
+                        {today && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[var(--accent)] text-black uppercase">Hoje</span>}
+                      </div>
+                      <p className="text-xs font-medium mt-1 truncate">{s.evt.replace(/\s*\((MB|MP)\)\s*$/, '')}</p>
+                      <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{s.weekday} · a partir das {s.time}</p>
+                    </div>
+                    <svg className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                )
+              })}
+              <p className="text-[10px] text-[var(--text-muted)] pt-1">
+                Horario de inicio do dia. A ordem exata das provas pode variar — acompanhe pela programacao.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Info */}
