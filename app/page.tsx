@@ -38,6 +38,8 @@ function HomeContent() {
   const [search, setSearch] = useState('')
   const [marcha, setMarcha] = useState<string>('Todas')
   const [categoria, setCategoria] = useState<string>('Todas')
+  const [categoriaAtual, setCategoriaAtual] = useState<string | null>(null)
+  const [defaultCategoriaReady, setDefaultCategoriaReady] = useState(false)
   const [categorias, setCategorias] = useState<string[]>([])
   const [criadores, setCriadores] = useState<string[]>([])
   const [expositores, setExpositores] = useState<string[]>([])
@@ -72,6 +74,18 @@ function HomeContent() {
       if (harRes.data) setHarasList(harRes.data.map((d: { haras: string }) => d.haras).filter(Boolean))
     }
     loadFilters()
+  }, [])
+
+  useEffect(() => {
+    async function loadCategoriaAtual() {
+      const { data, error } = await supabase.rpc('nm_get_categoria_atual')
+      if (!error && data) {
+        setCategoriaAtual(data)
+        setCategoria(prev => prev === 'Todas' ? data : prev)
+      }
+      setDefaultCategoriaReady(true)
+    }
+    loadCategoriaAtual()
   }, [])
 
   useEffect(() => {
@@ -145,6 +159,7 @@ function HomeContent() {
   }, [search, marcha, categoria, campeonatoFilter, activeFilter])
 
   useEffect(() => {
+    if (!defaultCategoriaReady) return
     setPage(0)
     setAnimals([])
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -152,7 +167,7 @@ function HomeContent() {
       fetchAnimals(0, true)
     }, 300)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [search, marcha, categoria, campeonatoFilter, activeFilter, fetchAnimals])
+  }, [search, marcha, categoria, campeonatoFilter, activeFilter, fetchAnimals, defaultCategoriaReady])
 
   useEffect(() => {
     if (!sentinelRef.current || !hasMore) return
@@ -304,6 +319,9 @@ function HomeContent() {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-emerald-300">Programacao de Julgamentos</p>
             <p className="text-[10px] text-[var(--text-muted)]">18/07 a 01/08 · Confira o calendario completo</p>
+            {categoriaAtual && (
+              <p className="text-[11px] font-semibold text-amber-300 mt-0.5 truncate">Agora na Pista: {categoriaAtual}</p>
+            )}
           </div>
           <svg className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
