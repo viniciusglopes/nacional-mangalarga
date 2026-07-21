@@ -10,7 +10,7 @@ type DailyView = { dia: string; total: number }
 export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null)
   const [admin, setAdmin] = useState<Admin | null>(null)
-  const [tab, setTab] = useState<'banners' | 'analytics' | 'admins' | 'leads'>('analytics')
+  const [tab, setTab] = useState<'banners' | 'analytics' | 'admins' | 'leads' | 'categoria'>('analytics')
 
   useEffect(() => {
     const t = localStorage.getItem('nm_admin_token')
@@ -50,7 +50,7 @@ export default function AdminPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-4">
         <div className="flex gap-2 mb-6 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          {(['analytics', 'leads', 'banners', 'admins'] as const).map(t => (
+          {(['analytics', 'leads', 'categoria', 'banners', 'admins'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -58,13 +58,14 @@ export default function AdminPage() {
                 tab === t ? 'bg-[var(--accent)] text-black' : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white'
               }`}
             >
-              {t === 'analytics' ? 'Analytics' : t === 'leads' ? 'Leads' : t === 'banners' ? 'Banners' : 'Admins'}
+              {t === 'analytics' ? 'Analytics' : t === 'leads' ? 'Leads' : t === 'categoria' ? 'Categoria' : t === 'banners' ? 'Banners' : 'Admins'}
             </button>
           ))}
         </div>
 
         {tab === 'analytics' && <AnalyticsPanel token={token} />}
         {tab === 'leads' && <LeadsPanel token={token} />}
+        {tab === 'categoria' && <CategoriaPanel token={token} />}
         {tab === 'banners' && <BannersPanel token={token} />}
         {tab === 'admins' && <AdminsPanel token={token} />}
       </div>
@@ -202,6 +203,67 @@ function LeadsPanel({ token }: { token: string }) {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function CategoriaPanel({ token }: { token: string }) {
+  const [categorias, setCategorias] = useState<string[]>([])
+  const [current, setCurrent] = useState<string | null>(null)
+  const [selected, setSelected] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  const load = useCallback(async () => {
+    const res = await fetch('/api/admin/categoria-atual', { headers: { 'Authorization': `Bearer ${token}` } })
+    const data = await res.json()
+    setCategorias(data.categorias || [])
+    setCurrent(data.categoria || null)
+    setSelected(data.categoria || '')
+    setLoading(false)
+  }, [token])
+
+  useEffect(() => { load() }, [load])
+
+  async function save() {
+    setSaving(true)
+    setMsg('')
+    const res = await fetch('/api/admin/categoria-atual', {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ categoria: selected || null }),
+    })
+    setSaving(false)
+    if (res.ok) {
+      setCurrent(selected || null)
+      setMsg('Categoria em andamento atualizada!')
+      setTimeout(() => setMsg(''), 3000)
+    } else {
+      setMsg('Erro ao salvar')
+    }
+  }
+
+  if (loading) return <div className="text-center py-8"><div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" /></div>
+
+  const inputClass = "w-full py-2 px-3 bg-[#0f0f1a] border border-[var(--border)] rounded-lg text-sm text-white focus:outline-none focus:border-[var(--accent)] appearance-none"
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-sm font-semibold">Categoria em Andamento</h3>
+      <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)] space-y-3">
+        <p className="text-xs text-[var(--text-muted)]">
+          Agora na pista: <span className="text-[var(--accent)] font-semibold">{current || 'Nenhuma configurada'}</span>
+        </p>
+        <select value={selected} onChange={e => setSelected(e.target.value)} className={inputClass}>
+          <option value="">Nenhuma</option>
+          {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        {msg && <p className="text-sm text-green-400">{msg}</p>}
+        <button onClick={save} disabled={saving} className="px-4 py-2 bg-[var(--accent)] text-black rounded-lg text-sm font-semibold disabled:opacity-50">
+          {saving ? 'Salvando...' : 'Salvar'}
+        </button>
+      </div>
     </div>
   )
 }
