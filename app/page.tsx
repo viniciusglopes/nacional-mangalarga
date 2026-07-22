@@ -125,7 +125,7 @@ function HomeContent() {
     let query = supabase
       .from('nm_animais')
       .select('*', { count: 'exact' })
-      .order('id_catalogo', { ascending: true })
+      .order('num_catalogo_int', { ascending: true, nullsFirst: false })
       .range(from, to)
 
     if (activeFilter) {
@@ -354,7 +354,7 @@ function HomeContent() {
           {animals.map(animal => (
             <Link
               key={animal.id}
-              href={`/animal/${animal.id}`}
+              href={`/animal/${animal.num_catalogo || animal.id}`}
               onClick={() => trackAnimalClick(animal.id)}
               className="block bg-[var(--bg-card)] rounded-xl p-3 border border-[var(--border)] hover:border-[var(--accent)]/30 transition-all active:scale-[0.98]"
             >

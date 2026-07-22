@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import CookieConsent from "@/components/CookieConsent";
+import InstallPrompt from "@/components/InstallPrompt";
 import Analytics from "@/components/Analytics";
 import { AuthProvider } from "@/lib/auth";
 
@@ -48,6 +49,7 @@ export default function RootLayout({
           <Analytics />
           {children}
           <CookieConsent />
+          <InstallPrompt />
         </AuthProvider>
       </body>
     </html>
