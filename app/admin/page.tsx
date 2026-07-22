@@ -10,7 +10,7 @@ type DailyView = { dia: string; total: number }
 export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null)
   const [admin, setAdmin] = useState<Admin | null>(null)
-  const [tab, setTab] = useState<'banners' | 'analytics' | 'admins' | 'leads' | 'categoria'>('analytics')
+  const [tab, setTab] = useState<'banners' | 'analytics' | 'admins' | 'leads' | 'categoria' | 'resultados'>('analytics')
 
   useEffect(() => {
     const t = localStorage.getItem('nm_admin_token')
@@ -50,7 +50,7 @@ export default function AdminPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-4">
         <div className="flex gap-2 mb-6 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          {(['analytics', 'leads', 'categoria', 'banners', 'admins'] as const).map(t => (
+          {(['analytics', 'leads', 'categoria', 'resultados', 'banners', 'admins'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -58,7 +58,7 @@ export default function AdminPage() {
                 tab === t ? 'bg-[var(--accent)] text-black' : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white'
               }`}
             >
-              {t === 'analytics' ? 'Analytics' : t === 'leads' ? 'Leads' : t === 'categoria' ? 'Categoria' : t === 'banners' ? 'Banners' : 'Admins'}
+              {t === 'analytics' ? 'Analytics' : t === 'leads' ? 'Leads' : t === 'categoria' ? 'Categoria' : t === 'resultados' ? 'Resultados' : t === 'banners' ? 'Banners' : 'Admins'}
             </button>
           ))}
         </div>
@@ -66,6 +66,7 @@ export default function AdminPage() {
         {tab === 'analytics' && <AnalyticsPanel token={token} />}
         {tab === 'leads' && <LeadsPanel token={token} />}
         {tab === 'categoria' && <CategoriaPanel token={token} />}
+        {tab === 'resultados' && <ResultadosPanel token={token} />}
         {tab === 'banners' && <BannersPanel token={token} />}
         {tab === 'admins' && <AdminsPanel token={token} />}
       </div>
@@ -263,6 +264,72 @@ function CategoriaPanel({ token }: { token: string }) {
         <button onClick={save} disabled={saving} className="px-4 py-2 bg-[var(--accent)] text-black rounded-lg text-sm font-semibold disabled:opacity-50">
           {saving ? 'Salvando...' : 'Salvar'}
         </button>
+      </div>
+    </div>
+  )
+}
+
+type SyncStatus = { ultima_sincronizacao: string | null; classes_processadas: number | null; linhas_atualizadas: number | null; erro: string | null }
+
+function ResultadosPanel({ token }: { token: string }) {
+  const [status, setStatus] = useState<SyncStatus | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
+  const [ultimoResumo, setUltimoResumo] = useState<{ classesProcessadas: number; linhasAtualizadas: number; erros: string[] } | null>(null)
+
+  const loadStatus = useCallback(async () => {
+    const res = await fetch('/api/admin/resultados', { headers: { 'Authorization': `Bearer ${token}` } })
+    const data = await res.json()
+    setStatus(data)
+    setLoading(false)
+  }, [token])
+
+  useEffect(() => { loadStatus() }, [loadStatus])
+
+  async function atualizar() {
+    setSyncing(true)
+    setUltimoResumo(null)
+    const res = await fetch('/api/admin/resultados', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+    })
+    const data = await res.json()
+    setUltimoResumo(data)
+    setSyncing(false)
+    loadStatus()
+  }
+
+  if (loading) return <div className="text-center py-8"><div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" /></div>
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-sm font-semibold">Resultados (resultados.abccmm.org.br)</h3>
+      <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)] space-y-3">
+        <p className="text-xs text-[var(--text-muted)]">
+          Ultima sincronizacao: <span className="text-white">{status?.ultima_sincronizacao ? new Date(status.ultima_sincronizacao).toLocaleString('pt-BR') : 'nunca'}</span>
+        </p>
+        {status?.classes_processadas != null && (
+          <p className="text-xs text-[var(--text-muted)]">
+            {status.classes_processadas} categorias · {status.linhas_atualizadas} resultados
+          </p>
+        )}
+        {status?.erro && (
+          <p className="text-xs text-red-400">Ultimo erro: {status.erro}</p>
+        )}
+        <button onClick={atualizar} disabled={syncing} className="px-4 py-2 bg-[var(--accent)] text-black rounded-lg text-sm font-semibold disabled:opacity-50">
+          {syncing ? 'Atualizando... (pode levar alguns minutos)' : 'Atualizar Resultados'}
+        </button>
+        <p className="text-[10px] text-[var(--text-muted)]">
+          A base tambem e atualizada automaticamente a cada 15 minutos pelo servidor.
+        </p>
+        {ultimoResumo && (
+          <div className="text-xs pt-2 border-t border-[var(--border)]">
+            <p className="text-green-400">{ultimoResumo.classesProcessadas} categorias processadas, {ultimoResumo.linhasAtualizadas} resultados salvos.</p>
+            {ultimoResumo.erros.length > 0 && (
+              <p className="text-red-400 mt-1">{ultimoResumo.erros.length} erro(s): {ultimoResumo.erros.slice(0, 3).join(' | ')}</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
