@@ -20,7 +20,7 @@ export default function Favoritos() {
         .from('nm_animais')
         .select('*')
         .in('id', favs)
-        .order('nome', { ascending: true })
+        .order('num_catalogo_int', { ascending: true, nullsFirst: false })
       setAnimals(data ?? [])
       setLoading(false)
     }
@@ -57,7 +57,7 @@ export default function Favoritos() {
             {animals.map(animal => (
               <Link
                 key={animal.id}
-                href={`/animal/${animal.id}`}
+                href={`/animal/${animal.num_catalogo || animal.id}`}
                 className="block bg-[var(--bg-card)] rounded-xl p-3 border border-[var(--border)] hover:border-[var(--accent)]/30 transition-all active:scale-[0.98]"
               >
                 <div className="flex items-start justify-between gap-2">

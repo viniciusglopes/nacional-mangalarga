@@ -44,3 +44,16 @@ input, select {
   background: var(--border);
   border-radius: 2px;
 }
+
+@keyframes banner-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-banner-marquee {
+  animation: banner-marquee linear infinite;
+}
+
+.animate-banner-marquee:hover {
+  animation-play-state: paused;
+}

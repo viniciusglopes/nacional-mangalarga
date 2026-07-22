@@ -61,20 +61,35 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
+      // O link usa o numero do catalogo (o que aparece pro usuario). Links
+      // antigos ainda podem vir com o id interno, entao cai pra ele se nao
+      // achar por catalogo.
+      const { data: porCatalogo } = await supabase
         .from('nm_animais')
         .select('*')
-        .eq('id', id)
-        .single()
-      setAnimal(data)
+        .eq('num_catalogo', id)
+        .limit(1)
+      let found = porCatalogo?.[0] || null
+      if (!found) {
+        const { data: porId } = await supabase
+          .from('nm_animais')
+          .select('*')
+          .eq('id', id)
+          .limit(1)
+        found = porId?.[0] || null
+      }
+      setAnimal(found)
       setLoading(false)
     }
     load()
-
-    const favs = JSON.parse(localStorage.getItem('nm_favoritos') || '[]')
-    setIsFav(favs.includes(Number(id)))
-    trackAnimalClick(Number(id))
   }, [id])
+
+  useEffect(() => {
+    if (!animal) return
+    const favs = JSON.parse(localStorage.getItem('nm_favoritos') || '[]')
+    setIsFav(favs.includes(animal.id))
+    trackAnimalClick(animal.id)
+  }, [animal])
 
   useEffect(() => {
     async function loadResultados() {
@@ -95,8 +110,9 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
   const schedule = useMemo(() => (animal ? getAnimalSchedule(animal) : []), [animal])
 
   function toggleFav() {
+    if (!animal) return
     const favs: number[] = JSON.parse(localStorage.getItem('nm_favoritos') || '[]')
-    const numId = Number(id)
+    const numId = animal.id
     if (favs.includes(numId)) {
       const next = favs.filter(f => f !== numId)
       localStorage.setItem('nm_favoritos', JSON.stringify(next))

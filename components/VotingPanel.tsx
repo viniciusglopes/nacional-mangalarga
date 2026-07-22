@@ -101,7 +101,7 @@ export default function VotingPanel({ animalId, campeonato }: { animalId: number
               {ranking.slice(0, 3).map((r, i) => (
                 <Link
                   key={r.id}
-                  href={`/animal/${r.id}`}
+                  href={`/animal/${r.num_catalogo || r.id}`}
                   className={`flex items-center gap-2 rounded-lg p-2 transition-colors ${
                     r.id === animalId ? 'bg-[var(--accent)]/10 border border-[var(--accent)]/20' : 'bg-[var(--bg-primary)] hover:bg-[var(--bg-card-hover)]'
                   }`}

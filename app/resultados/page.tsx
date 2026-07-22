@@ -26,7 +26,7 @@ function formatColocacao(colocacao: string | null): string {
   return colocacao
 }
 
-function ProvaTable({ linhas, idPorCatalogo }: { linhas: ResultadoLinha[]; idPorCatalogo: Record<string, number> }) {
+function ProvaTable({ linhas, catalogosExistentes }: { linhas: ResultadoLinha[]; catalogosExistentes: Set<string> }) {
   if (linhas.length === 0) {
     return <p className="text-xs text-[var(--text-muted)] py-2">Ainda nao julgado</p>
   }
@@ -49,7 +49,7 @@ function ProvaTable({ linhas, idPorCatalogo }: { linhas: ResultadoLinha[]; idPor
         <span className="text-right">Pontos</span>
       </div>
       {ordenadas.map((l, i) => {
-        const animalId = idPorCatalogo[l.num_catalogo]
+        const existe = catalogosExistentes.has(l.num_catalogo)
         const conteudo = (
           <>
             <span className="font-semibold">{formatColocacao(l.colocacao)}</span>
@@ -58,8 +58,8 @@ function ProvaTable({ linhas, idPorCatalogo }: { linhas: ResultadoLinha[]; idPor
             <span className="text-right text-[var(--text-muted)]">{l.pontuacao || '—'}</span>
           </>
         )
-        return animalId ? (
-          <Link key={i} href={`/animal/${animalId}`} className={`${colunas} py-1.5 border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-card-hover)]`}>
+        return existe ? (
+          <Link key={i} href={`/animal/${l.num_catalogo}`} className={`${colunas} py-1.5 border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-card-hover)]`}>
             {conteudo}
           </Link>
         ) : (
@@ -74,7 +74,7 @@ function CategoriaResultado({ campeonato }: { campeonato: Campeonato }) {
   const [expanded, setExpanded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [porProva, setPorProva] = useState<Record<string, ResultadoLinha[]>>({})
-  const [idPorCatalogo, setIdPorCatalogo] = useState<Record<string, number>>({})
+  const [catalogosExistentes, setCatalogosExistentes] = useState<Set<string>>(new Set())
   const [loaded, setLoaded] = useState(false)
 
   async function toggle() {
@@ -91,7 +91,7 @@ function CategoriaResultado({ campeonato }: { campeonato: Campeonato }) {
           .eq('categoria', campeonato.categoria),
         supabase
           .from('nm_animais')
-          .select('id, num_catalogo')
+          .select('num_catalogo')
           .eq('tipo_campeonato', campeonato.tipo_campeonato)
           .eq('tipo_marcha', campeonato.tipo_marcha)
           .eq('categoria', campeonato.categoria),
@@ -104,11 +104,11 @@ function CategoriaResultado({ campeonato }: { campeonato: Campeonato }) {
       }
       setPorProva(grupos)
 
-      const mapa: Record<string, number> = {}
+      const existentes = new Set<string>()
       for (const a of animaisRes.data || []) {
-        if (a.num_catalogo) mapa[a.num_catalogo] = a.id
+        if (a.num_catalogo) existentes.add(a.num_catalogo)
       }
-      setIdPorCatalogo(mapa)
+      setCatalogosExistentes(existentes)
 
       setLoaded(true)
       setLoading(false)
@@ -146,7 +146,7 @@ function CategoriaResultado({ campeonato }: { campeonato: Campeonato }) {
             PROVAS.map(p => (
               <div key={p.tipo}>
                 <h4 className="text-[10px] font-semibold text-[var(--accent)] uppercase tracking-wide mb-1">{p.label}</h4>
-                <ProvaTable linhas={porProva[p.tipo] || []} idPorCatalogo={idPorCatalogo} />
+                <ProvaTable linhas={porProva[p.tipo] || []} catalogosExistentes={catalogosExistentes} />
               </div>
             ))
           )}

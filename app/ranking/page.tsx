@@ -102,7 +102,7 @@ export default function RankingPage() {
                   {r.ranking.slice(0, 3).map((a, i) => (
                     <Link
                       key={a.id}
-                      href={`/animal/${a.id}`}
+                      href={`/animal/${a.num_catalogo || a.id}`}
                       className="flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--bg-card-hover)] transition-colors"
                     >
                       <img src={MEDAL_IMGS[i]} alt={`${i+1}o lugar`} className="w-10 h-10 flex-shrink-0" />
