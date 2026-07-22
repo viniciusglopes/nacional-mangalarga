@@ -1,0 +1,33 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
+import { refreshAllResults } from '@/lib/resultados-abccmm'
+
+function verifyToken(req: NextRequest) {
+  const auth = req.headers.get('authorization')
+  if (!auth?.startsWith('Bearer ')) return null
+  try {
+    const payload = JSON.parse(Buffer.from(auth.slice(7), 'base64').toString())
+    if (payload.exp < Date.now()) return null
+    return payload
+  } catch { return null }
+}
+
+export async function GET(req: NextRequest) {
+  if (!verifyToken(req)) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+  const { data } = await supabase.rpc('nm_get_resultados_sync')
+  const status = Array.isArray(data) ? data[0] : data
+  return NextResponse.json(status || null)
+}
+
+export async function POST(req: NextRequest) {
+  if (!verifyToken(req)) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+
+  const resumo = await refreshAllResults()
+  await supabase.rpc('nm_admin_set_resultados_sync', {
+    p_classes: resumo.classesProcessadas,
+    p_linhas: resumo.linhasAtualizadas,
+    p_erro: resumo.erros.length ? resumo.erros.slice(0, 10).join(' | ') : null,
+  })
+
+  return NextResponse.json(resumo)
+}

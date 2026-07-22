@@ -329,6 +329,26 @@ function HomeContent() {
         </Link>
       </div>
 
+      <div className="px-4 pt-2 max-w-2xl mx-auto w-full">
+        <Link
+          href="/resultados"
+          className="flex items-center gap-3 bg-gradient-to-r from-amber-900/40 to-amber-800/20 border border-amber-700/30 rounded-xl p-3 hover:border-amber-500/40 transition-all active:scale-[0.98]"
+        >
+          <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-amber-300">Resultados por Categoria</p>
+            <p className="text-[10px] text-[var(--text-muted)]">Marcha, Morfologia, Funcional e Categoria</p>
+          </div>
+          <svg className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+      </div>
+
       <div className="flex-1 px-4 py-3 max-w-2xl mx-auto w-full">
         <div className="space-y-2">
           {animals.map(animal => (

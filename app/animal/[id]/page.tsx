@@ -28,11 +28,36 @@ function GenealogyCard({ label, nome, registro }: { label: string; nome: string;
   )
 }
 
+type ResultadoAnimal = { tipo_prova: string; colocacao: string | null; pontuacao: string | null }
+
+function formatColocacao(colocacao: string | null): string {
+  if (!colocacao) return '—'
+  if (/^\d+$/.test(colocacao)) return `${colocacao}º Lugar`
+  return colocacao
+}
+
+function ResultadoCard({ label, resultado }: { label: string; resultado: ResultadoAnimal | undefined }) {
+  return (
+    <div className="bg-[var(--bg-primary)] rounded-lg p-3 border border-[var(--border)] flex-1 min-w-0 text-center">
+      <p className="text-[10px] text-[var(--accent)] font-medium uppercase tracking-wide mb-1">{label}</p>
+      {resultado ? (
+        <>
+          <p className="text-lg font-bold truncate">{formatColocacao(resultado.colocacao)}</p>
+          {resultado.pontuacao && <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Pontuacao: {resultado.pontuacao}</p>}
+        </>
+      ) : (
+        <p className="text-xs text-[var(--text-muted)] mt-1">Ainda nao julgado</p>
+      )}
+    </div>
+  )
+}
+
 export default function AnimalDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [animal, setAnimal] = useState<Animal | null>(null)
   const [loading, setLoading] = useState(true)
   const [isFav, setIsFav] = useState(false)
+  const [resultados, setResultados] = useState<ResultadoAnimal[]>([])
 
   useEffect(() => {
     async function load() {
@@ -50,6 +75,22 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
     setIsFav(favs.includes(Number(id)))
     trackAnimalClick(Number(id))
   }, [id])
+
+  useEffect(() => {
+    async function loadResultados() {
+      if (!animal?.num_catalogo) { setResultados([]); return }
+      const { data } = await supabase
+        .from('nm_resultados')
+        .select('tipo_prova, colocacao, pontuacao')
+        .eq('tipo_campeonato', animal.tipo_campeonato)
+        .eq('tipo_marcha', animal.tipo_marcha)
+        .eq('categoria', animal.categoria)
+        .eq('num_catalogo', animal.num_catalogo)
+        .in('tipo_prova', ['marcha', 'final'])
+      setResultados(data || [])
+    }
+    loadResultados()
+  }, [animal])
 
   const schedule = useMemo(() => (animal ? getAnimalSchedule(animal) : []), [animal])
 
@@ -126,6 +167,18 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
                 <p className="text-3xl font-bold text-[var(--accent)]">{animal.num_catalogo}</p>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Resultado (destaque para Marcha e Final/Categoria) */}
+        <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold text-[var(--accent)] uppercase tracking-wide">Resultado</h3>
+            <Link href="/resultados" className="text-[10px] text-[var(--text-muted)] hover:text-white">Ver categoria completa</Link>
+          </div>
+          <div className="flex gap-2">
+            <ResultadoCard label="Marcha" resultado={resultados.find(r => r.tipo_prova === 'marcha')} />
+            <ResultadoCard label="Categoria" resultado={resultados.find(r => r.tipo_prova === 'final')} />
           </div>
         </div>
 
