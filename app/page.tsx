@@ -39,6 +39,7 @@ function HomeContent() {
   const [marcha, setMarcha] = useState<string>('Todas')
   const [categoria, setCategoria] = useState<string>('Todas')
   const [categoriaAtual, setCategoriaAtual] = useState<string | null>(null)
+  const [marchaAtual, setMarchaAtual] = useState<string | null>(null)
   const [defaultCategoriaReady, setDefaultCategoriaReady] = useState(false)
   const [categorias, setCategorias] = useState<string[]>([])
   const [criadores, setCriadores] = useState<string[]>([])
@@ -79,9 +80,12 @@ function HomeContent() {
   useEffect(() => {
     async function loadCategoriaAtual() {
       const { data, error } = await supabase.rpc('nm_get_categoria_atual')
-      if (!error && data) {
-        setCategoriaAtual(data)
-        setCategoria(prev => prev === 'Todas' ? data : prev)
+      const atual = Array.isArray(data) ? data[0] : data
+      if (!error && atual?.categoria) {
+        setCategoriaAtual(atual.categoria)
+        setMarchaAtual(atual.tipo_marcha || null)
+        setCategoria(prev => prev === 'Todas' ? atual.categoria : prev)
+        if (atual.tipo_marcha) setMarcha(prev => prev === 'Todas' ? atual.tipo_marcha : prev)
       }
       setDefaultCategoriaReady(true)
     }
@@ -320,7 +324,9 @@ function HomeContent() {
             <p className="text-sm font-semibold text-[var(--text-primary)]">Programacao de Julgamentos</p>
             <p className="text-[10px] text-[var(--text-muted)]">18/07 a 01/08 · Confira o calendario completo</p>
             {categoriaAtual && (
-              <p className="text-[11px] font-semibold text-[var(--accent)] mt-0.5 truncate">Agora na Pista: {categoriaAtual}</p>
+              <p className="text-[11px] font-semibold text-[var(--accent)] mt-0.5 truncate">
+                Agora na Pista: {categoriaAtual}{marchaAtual && ` (${marchaAtual === 'MP' ? 'M. Picada' : 'M. Batida'})`}
+              </p>
             )}
           </div>
           <svg className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
