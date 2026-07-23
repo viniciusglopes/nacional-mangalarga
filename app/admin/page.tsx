@@ -211,7 +211,9 @@ function LeadsPanel({ token }: { token: string }) {
 function CategoriaPanel({ token }: { token: string }) {
   const [categorias, setCategorias] = useState<string[]>([])
   const [current, setCurrent] = useState<string | null>(null)
+  const [currentMarcha, setCurrentMarcha] = useState<string | null>(null)
   const [selected, setSelected] = useState('')
+  const [selectedMarcha, setSelectedMarcha] = useState<'MB' | 'MP'>('MB')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
@@ -221,7 +223,9 @@ function CategoriaPanel({ token }: { token: string }) {
     const data = await res.json()
     setCategorias(data.categorias || [])
     setCurrent(data.categoria || null)
+    setCurrentMarcha(data.tipo_marcha || null)
     setSelected(data.categoria || '')
+    setSelectedMarcha(data.tipo_marcha || 'MB')
     setLoading(false)
   }, [token])
 
@@ -233,11 +237,12 @@ function CategoriaPanel({ token }: { token: string }) {
     const res = await fetch('/api/admin/categoria-atual', {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ categoria: selected || null }),
+      body: JSON.stringify({ categoria: selected || null, tipo_marcha: selected ? selectedMarcha : null }),
     })
     setSaving(false)
     if (res.ok) {
       setCurrent(selected || null)
+      setCurrentMarcha(selected ? selectedMarcha : null)
       setMsg('Categoria em andamento atualizada!')
       setTimeout(() => setMsg(''), 3000)
     } else {
@@ -254,12 +259,28 @@ function CategoriaPanel({ token }: { token: string }) {
       <h3 className="text-sm font-semibold">Categoria em Andamento</h3>
       <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)] space-y-3">
         <p className="text-xs text-[var(--text-muted)]">
-          Agora na pista: <span className="text-[var(--accent)] font-semibold">{current || 'Nenhuma configurada'}</span>
+          Agora na pista: <span className="text-[var(--accent)] font-semibold">
+            {current ? `${current} (${currentMarcha === 'MP' ? 'Marcha Picada' : 'Marcha Batida'})` : 'Nenhuma configurada'}
+          </span>
         </p>
         <select value={selected} onChange={e => setSelected(e.target.value)} className={inputClass}>
           <option value="">Nenhuma</option>
           {categorias.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
+        <div className="flex gap-1 bg-[var(--bg-primary)] rounded-lg p-0.5">
+          {(['MB', 'MP'] as const).map(m => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setSelectedMarcha(m)}
+              className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                selectedMarcha === m ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-secondary)]'
+              }`}
+            >
+              {m === 'MB' ? 'Marcha Batida' : 'Marcha Picada'}
+            </button>
+          ))}
+        </div>
         {msg && <p className="text-sm text-green-400">{msg}</p>}
         <button onClick={save} disabled={saving} className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-semibold disabled:opacity-50">
           {saving ? 'Salvando...' : 'Salvar'}
