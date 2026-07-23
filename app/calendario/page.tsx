@@ -16,10 +16,10 @@ export default function CalendarioPage() {
 
   return (
     <main className="flex flex-col min-h-screen">
-      <header className="sticky top-0 z-50 bg-[#0f0f1a]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 py-3">
+      <header className="sticky top-0 z-50 bg-[var(--bg-primary)]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 py-3">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3 mb-3">
-            <Link href="/" className="text-[var(--text-muted)] hover:text-white">
+            <Link href="/" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             </Link>
             <div>
@@ -34,7 +34,7 @@ export default function CalendarioPage() {
                 onClick={() => setFilter(m)}
                 className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   filter === m
-                    ? m === 'MB' ? 'bg-blue-500 text-white' : m === 'MP' ? 'bg-orange-500 text-white' : 'bg-[var(--accent)] text-black'
+                    ? m === 'MB' ? 'bg-[var(--mb-color)] text-white' : m === 'MP' ? 'bg-[var(--mp-color)] text-white' : 'bg-[var(--accent)] text-white'
                     : 'text-[var(--text-secondary)]'
                 }`}
               >
@@ -64,8 +64,8 @@ export default function CalendarioPage() {
           return (
             <div key={day.date} className={`rounded-xl border overflow-hidden transition-all ${
               today ? 'border-[var(--accent)] bg-[var(--accent)]/5' :
-              isNext ? 'border-amber-500/50 bg-amber-500/5' :
-              day.highlight ? 'border-amber-500/30' :
+              isNext ? 'border-[var(--accent-dark)]/50 bg-[var(--accent-dark)]/5' :
+              day.highlight ? 'border-[var(--accent-dark)]/30' :
               past ? 'border-[var(--border)] opacity-60' :
               'border-[var(--border)]'
             }`}>
@@ -74,9 +74,9 @@ export default function CalendarioPage() {
                 className="w-full flex items-center gap-3 p-3 text-left bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] transition-colors"
               >
                 <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${
-                  today ? 'bg-[var(--accent)] text-black' :
-                  isNext ? 'bg-amber-500 text-black' :
-                  day.highlight ? 'bg-amber-500/20 text-amber-400' :
+                  today ? 'bg-[var(--accent)] text-white' :
+                  isNext ? 'bg-[var(--accent-dark)] text-white' :
+                  day.highlight ? 'bg-[var(--accent-dark)]/20 text-[var(--accent-dark)]' :
                   'bg-[var(--bg-primary)] text-[var(--text-secondary)]'
                 }`}>
                   <span className="text-lg font-bold leading-none">{day.date.split('/')[0]}</span>
@@ -87,9 +87,9 @@ export default function CalendarioPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold">{day.weekday}</p>
-                    {today && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[var(--accent)] text-black uppercase">Hoje</span>}
-                    {isNext && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500 text-black uppercase">Proximo</span>}
-                    {day.highlight && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 uppercase">Finais</span>}
+                    {today && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[var(--accent)] text-white uppercase">Hoje</span>}
+                    {isNext && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[var(--accent-dark)] text-white uppercase">Proximo</span>}
+                    {day.highlight && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[var(--accent-dark)]/20 text-[var(--accent-dark)] uppercase">Finais</span>}
                   </div>
                   <p className="text-[10px] text-[var(--text-muted)]">
                     Inicio {day.time} · {filteredEvents.length} {filteredEvents.length === 1 ? 'prova' : 'provas'}
@@ -108,18 +108,18 @@ export default function CalendarioPage() {
                     return (
                       <div key={i} className="flex items-start gap-2.5 px-3 py-2 border-b border-[var(--border)] last:border-b-0">
                         <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
-                          type === 'especial' ? 'bg-amber-400' :
-                          type === 'morfologia' ? 'bg-emerald-400' :
-                          type === 'marcha' ? 'bg-purple-400' :
-                          type === 'progenie' ? 'bg-pink-400' :
-                          'bg-blue-400'
+                          type === 'especial' ? 'bg-[var(--accent-dark)]' :
+                          type === 'morfologia' ? 'bg-[var(--text-primary)]' :
+                          type === 'marcha' ? 'bg-[var(--accent)]' :
+                          type === 'progenie' ? 'bg-[var(--text-secondary)]' :
+                          'bg-[var(--text-muted)]'
                         }`} />
                         <div className="min-w-0 flex-1">
-                          <p className={`text-xs ${type === 'especial' ? 'font-bold text-amber-400' : ''}`}>{evt}</p>
+                          <p className={`text-xs ${type === 'especial' ? 'font-bold text-[var(--accent-dark)]' : ''}`}>{evt}</p>
                         </div>
                         {mt && (
                           <span className={`text-[9px] font-bold px-1 py-0.5 rounded flex-shrink-0 ${
-                            mt === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
+                            mt === 'MB' ? 'bg-[var(--mb-color)]/10 text-[var(--mb-color)]' : 'bg-[var(--mp-color)]/10 text-[var(--mp-color)]'
                           }`}>{mt}</span>
                         )}
                       </div>

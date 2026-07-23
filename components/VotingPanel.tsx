@@ -62,7 +62,7 @@ export default function VotingPanel({ animalId, campeonato }: { animalId: number
         {!user ? (
           <div className="text-center py-2">
             <p className="text-xs text-[var(--text-muted)] mb-2">Faca login para votar</p>
-            <a href="/login" className="inline-block px-4 py-2 bg-[var(--accent)] text-black text-xs font-semibold rounded-lg">
+            <a href="/login" className="inline-block px-4 py-2 bg-[var(--accent)] text-white text-xs font-semibold rounded-lg">
               Entrar
             </a>
           </div>
@@ -73,7 +73,7 @@ export default function VotingPanel({ animalId, campeonato }: { animalId: number
               disabled={loading}
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.97] ${
                 voted
-                  ? 'bg-[var(--accent)] text-black'
+                  ? 'bg-[var(--accent)] text-white'
                   : 'bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)]/50'
               }`}
             >
@@ -89,7 +89,7 @@ export default function VotingPanel({ animalId, campeonato }: { animalId: number
               )}
             </button>
             {votedOther && (
-              <p className="text-[10px] text-amber-400 text-center mt-1.5">Voce ja votou em outro animal desta categoria</p>
+              <p className="text-[10px] text-[var(--accent-dark)] text-center mt-1.5">Voce ja votou em outro animal desta categoria</p>
             )}
           </div>
         )}

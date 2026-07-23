@@ -29,9 +29,9 @@ export default function Favoritos() {
 
   return (
     <main className="flex flex-col min-h-screen">
-      <header className="sticky top-0 z-50 bg-[#0f0f1a]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 py-3">
+      <header className="sticky top-0 z-50 bg-[var(--bg-primary)]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <Link href="/" className="text-[var(--text-muted)] hover:text-white">
+          <Link href="/" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </Link>
           <h1 className="text-base font-bold">Meus Favoritos</h1>
@@ -64,7 +64,7 @@ export default function Favoritos() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        animal.tipo_marcha === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
+                        animal.tipo_marcha === 'MB' ? 'bg-[var(--mb-color)]/10 text-[var(--mb-color)]' : 'bg-[var(--mp-color)]/10 text-[var(--mp-color)]'
                       }`}>
                         {animal.tipo_marcha}
                       </span>

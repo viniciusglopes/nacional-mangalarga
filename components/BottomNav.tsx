@@ -18,7 +18,7 @@ export default function BottomNav() {
   ]
 
   return (
-    <nav className="sticky bottom-0 bg-[#0f0f1a]/95 backdrop-blur-sm border-t border-[var(--border)] px-4 py-2 safe-bottom">
+    <nav className="sticky bottom-0 bg-[var(--bg-primary)]/95 backdrop-blur-sm border-t border-[var(--border)] px-4 py-2 safe-bottom">
       <div className="max-w-2xl mx-auto flex justify-around">
         {items.map(item => {
           const active = pathname === item.href
@@ -26,7 +26,7 @@ export default function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-0.5 ${active ? 'text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-white'}`}
+              className={`flex flex-col items-center gap-0.5 ${active ? 'text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
