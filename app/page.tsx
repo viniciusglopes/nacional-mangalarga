@@ -195,15 +195,15 @@ function HomeContent() {
   }
 
   const typeLabel = { haras: 'Haras', criador: 'Criador', expositor: 'Expositor' }
-  const typeColor = { haras: 'text-[var(--accent)]', criador: 'text-blue-400', expositor: 'text-purple-400' }
+  const typeColor = { haras: 'text-[var(--accent)]', criador: 'text-[var(--text-primary)]', expositor: 'text-[var(--text-secondary)]' }
 
   return (
     <main className="flex flex-col min-h-screen">
       <Banner posicao="header_topo" />
-      <header className="sticky top-0 z-50 bg-[#0f0f1a]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 pt-4 pb-3">
+      <header className="sticky top-0 z-50 bg-[var(--bg-primary)]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 pt-4 pb-3">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg bg-[var(--accent)] flex items-center justify-center text-black font-bold text-lg flex-shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-[var(--accent)] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
               MM
             </div>
             <div>
@@ -219,7 +219,7 @@ function HomeContent() {
           {campeonatoFilter && (
             <div className="flex items-center gap-2 mb-3 bg-[var(--accent)]/10 border border-[var(--accent)]/30 rounded-lg px-3 py-2">
               <span className="text-xs text-[var(--accent)] flex-1 truncate">{campeonatoFilter}</span>
-              <Link href="/" className="text-[var(--text-muted)] hover:text-white flex-shrink-0">
+              <Link href="/" className="text-[var(--text-muted)] hover:text-[var(--text-primary)] flex-shrink-0">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </Link>
             </div>
@@ -236,10 +236,10 @@ function HomeContent() {
               value={search}
               onChange={e => { setSearch(e.target.value); setActiveFilter(null); setShowSuggestions(true) }}
               onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true) }}
-              className="w-full pl-10 pr-10 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+              className="w-full pl-10 pr-10 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
             />
             {(search || activeFilter) && (
-              <button onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-white">
+              <button onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             )}
@@ -282,8 +282,8 @@ function HomeContent() {
                     onClick={() => setMarcha(m.value)}
                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                       marcha === m.value
-                        ? m.value === 'MB' ? 'bg-blue-500 text-white' : m.value === 'MP' ? 'bg-orange-500 text-white' : 'bg-[var(--accent)] text-black'
-                        : 'text-[var(--text-secondary)] hover:text-white'
+                        ? m.value === 'MB' ? 'bg-[var(--mb-color)] text-white' : m.value === 'MP' ? 'bg-[var(--mp-color)] text-white' : 'bg-[var(--accent)] text-white'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                     }`}
                   >
                     {m.label}
@@ -294,7 +294,7 @@ function HomeContent() {
 
             {/* Categoria always visible */}
             <select value={categoria} onChange={e => setCategoria(e.target.value)}
-              className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-white focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
+              className="w-full py-2 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none"
               style={selectStyle}>
               <option value="Todas">Todas as categorias</option>
               {categorias.map(c => <option key={c} value={c}>{c}</option>)}
@@ -309,18 +309,18 @@ function HomeContent() {
       <div className="px-4 pt-3 max-w-2xl mx-auto w-full">
         <Link
           href="/calendario"
-          className="flex items-center gap-3 bg-gradient-to-r from-emerald-900/40 to-emerald-800/20 border border-emerald-700/30 rounded-xl p-3 hover:border-emerald-500/40 transition-all active:scale-[0.98]"
+          className="flex items-center gap-3 bg-black/[0.03] border border-black/10 rounded-xl p-3 hover:border-black/20 transition-all active:scale-[0.98]"
         >
-          <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-            <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-10 h-10 rounded-lg bg-black/5 flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-[var(--text-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-emerald-300">Programacao de Julgamentos</p>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Programacao de Julgamentos</p>
             <p className="text-[10px] text-[var(--text-muted)]">18/07 a 01/08 · Confira o calendario completo</p>
             {categoriaAtual && (
-              <p className="text-[11px] font-semibold text-amber-300 mt-0.5 truncate">Agora na Pista: {categoriaAtual}</p>
+              <p className="text-[11px] font-semibold text-[var(--accent)] mt-0.5 truncate">Agora na Pista: {categoriaAtual}</p>
             )}
           </div>
           <svg className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -332,15 +332,15 @@ function HomeContent() {
       <div className="px-4 pt-2 max-w-2xl mx-auto w-full">
         <Link
           href="/resultados"
-          className="flex items-center gap-3 bg-gradient-to-r from-amber-900/40 to-amber-800/20 border border-amber-700/30 rounded-xl p-3 hover:border-amber-500/40 transition-all active:scale-[0.98]"
+          className="flex items-center gap-3 bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-xl p-3 hover:border-[var(--accent)]/40 transition-all active:scale-[0.98]"
         >
-          <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-            <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-10 h-10 rounded-lg bg-[var(--accent)]/10 flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-amber-300">Resultados por Categoria</p>
+            <p className="text-sm font-semibold text-[var(--accent)]">Resultados por Categoria</p>
             <p className="text-[10px] text-[var(--text-muted)]">Marcha, Morfologia, Funcional e Categoria</p>
           </div>
           <svg className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -362,12 +362,12 @@ function HomeContent() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                      animal.tipo_marcha === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
+                      animal.tipo_marcha === 'MB' ? 'bg-[var(--mb-color)]/10 text-[var(--mb-color)]' : 'bg-[var(--mp-color)]/10 text-[var(--mp-color)]'
                     }`}>
                       {animal.tipo_marcha === 'MB' ? 'M. Batida' : 'M. Picada'}
                     </span>
                     {(animal.tipo_campeonato === 'Exclusivamente Marcha' || animal.tambem_excl_marcha) && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-300">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[var(--accent-dark)]/10 text-[var(--accent-dark)]">
                         Excl. Marcha
                       </span>
                     )}

@@ -49,9 +49,9 @@ export default function LoginPage() {
 
   if (user) return (
     <main className="flex flex-col min-h-screen">
-      <header className="sticky top-0 z-50 bg-[#0f0f1a]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 py-3">
+      <header className="sticky top-0 z-50 bg-[var(--bg-primary)]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <Link href="/" className="text-[var(--text-muted)] hover:text-white">
+          <Link href="/" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </Link>
           <h1 className="text-base font-bold">Minha Conta</h1>
@@ -59,7 +59,7 @@ export default function LoginPage() {
       </header>
 
       <div className="flex-1 flex flex-col items-center justify-center px-4">
-        <div className="w-16 h-16 rounded-full bg-[var(--accent)] flex items-center justify-center text-black text-2xl font-bold mb-4">
+        <div className="w-16 h-16 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-2xl font-bold mb-4">
           {user.nome.charAt(0).toUpperCase()}
         </div>
         <h2 className="text-lg font-bold mb-1">{user.nome}</h2>
@@ -76,9 +76,9 @@ export default function LoginPage() {
 
   return (
     <main className="flex flex-col min-h-screen">
-      <header className="sticky top-0 z-50 bg-[#0f0f1a]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 py-3">
+      <header className="sticky top-0 z-50 bg-[var(--bg-primary)]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <Link href="/" className="text-[var(--text-muted)] hover:text-white">
+          <Link href="/" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </Link>
           <h1 className="text-base font-bold">Entrar</h1>
@@ -88,7 +88,7 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-6">
-            <div className="w-14 h-14 rounded-lg bg-[var(--accent)] flex items-center justify-center text-black font-bold text-xl mx-auto mb-3">
+            <div className="w-14 h-14 rounded-lg bg-[var(--accent)] flex items-center justify-center text-white font-bold text-xl mx-auto mb-3">
               MM
             </div>
             <h2 className="text-lg font-bold">43a Nacional</h2>
@@ -99,7 +99,7 @@ export default function LoginPage() {
             <button
               onClick={() => setMode('telefone')}
               className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
-                mode === 'telefone' ? 'bg-[var(--accent)] text-black' : 'text-[var(--text-secondary)]'
+                mode === 'telefone' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-secondary)]'
               }`}
             >
               Telefone
@@ -107,7 +107,7 @@ export default function LoginPage() {
             <button
               onClick={() => setMode('email')}
               className={`flex-1 py-2 rounded-md text-xs font-medium transition-all ${
-                mode === 'email' ? 'bg-[var(--accent)] text-black' : 'text-[var(--text-secondary)]'
+                mode === 'email' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-secondary)]'
               }`}
             >
               Email
@@ -120,7 +120,7 @@ export default function LoginPage() {
               placeholder="Seu nome"
               value={nome}
               onChange={e => setNome(e.target.value)}
-              className="w-full py-2.5 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
+              className="w-full py-2.5 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
             />
             {mode === 'telefone' ? (
               <input
@@ -128,7 +128,7 @@ export default function LoginPage() {
                 placeholder="(00) 00000-0000"
                 value={telefone}
                 onChange={e => setTelefone(e.target.value)}
-                className="w-full py-2.5 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
+                className="w-full py-2.5 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
               />
             ) : (
               <input
@@ -136,14 +136,14 @@ export default function LoginPage() {
                 placeholder="seu@email.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="w-full py-2.5 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
+                className="w-full py-2.5 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
               />
             )}
             {error && <p className="text-xs text-red-400">{error}</p>}
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-2.5 bg-[var(--accent)] text-black font-semibold rounded-lg text-sm disabled:opacity-50"
+              className="w-full py-2.5 bg-[var(--accent)] text-white font-semibold rounded-lg text-sm disabled:opacity-50"
             >
               {submitting ? 'Entrando...' : 'Entrar e votar'}
             </button>

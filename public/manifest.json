@@ -4,8 +4,8 @@
   "description": "Catálogo oficial com 1639 animais da 43ª Exposição Nacional",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f0f1a",
-  "theme_color": "#1a1a2e",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "orientation": "portrait",
   "icons": [
     {

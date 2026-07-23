@@ -140,9 +140,9 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
   return (
     <main className="flex flex-col min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#0f0f1a]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 py-3">
+      <header className="sticky top-0 z-50 bg-[var(--bg-primary)]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <Link href="/" className="text-[var(--text-muted)] hover:text-white">
+          <Link href="/" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </Link>
           <div className="flex-1 min-w-0">
@@ -164,12 +164,12 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className={`text-xs font-bold px-2 py-1 rounded ${
-                  animal.tipo_marcha === 'MB' ? 'bg-blue-500/20 text-blue-400' : 'bg-orange-500/20 text-orange-400'
+                  animal.tipo_marcha === 'MB' ? 'bg-[var(--mb-color)]/10 text-[var(--mb-color)]' : 'bg-[var(--mp-color)]/10 text-[var(--mp-color)]'
                 }`}>
                   {animal.tipo_marcha === 'MB' ? 'Marcha Batida' : 'Marcha Picada'}
                 </span>
                 {(animal.tipo_campeonato === 'Exclusivamente Marcha' || animal.tambem_excl_marcha) && (
-                  <span className="text-xs font-bold px-2 py-1 rounded bg-amber-500/30 text-amber-300">
+                  <span className="text-xs font-bold px-2 py-1 rounded bg-[var(--accent-dark)]/10 text-[var(--accent-dark)]">
                     Excl. Marcha
                   </span>
                 )}
@@ -190,7 +190,7 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
         <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-semibold text-[var(--accent)] uppercase tracking-wide">Resultado</h3>
-            <Link href="/resultados" className="text-[10px] text-[var(--text-muted)] hover:text-white">Ver categoria completa</Link>
+            <Link href="/resultados" className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)]">Ver categoria completa</Link>
           </div>
           <div className="flex gap-2">
             <ResultadoCard label="Marcha" resultado={resultados.find(r => r.tipo_prova === 'marcha')} />
@@ -201,10 +201,10 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
         {/* Quando entra na pista (vinculo com o calendario pela categoria/campeonato) */}
         <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
           <div className="flex items-center gap-2 mb-3">
-            <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-[var(--text-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <h3 className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Quando entra na pista</h3>
+            <h3 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wide">Quando entra na pista</h3>
           </div>
 
           {schedule.length === 0 ? (
@@ -228,7 +228,7 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
                     }`}
                   >
                     <div className={`w-11 h-11 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
-                      today ? 'bg-[var(--accent)] text-black' : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'
+                      today ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'
                     }`}>
                       <span className="text-base font-bold leading-none">{s.date.split('/')[0]}</span>
                       <span className="text-[9px] font-medium uppercase leading-none mt-0.5">
@@ -238,13 +238,13 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
-                          s.kind === 'morfologia' ? 'bg-emerald-500/20 text-emerald-400' :
-                          s.kind === 'marcha' ? 'bg-purple-500/20 text-purple-400' :
-                          'bg-blue-500/20 text-blue-400'
+                          s.kind === 'morfologia' ? 'bg-black/5 text-[var(--text-primary)]' :
+                          s.kind === 'marcha' ? 'bg-[var(--accent)]/10 text-[var(--accent)]' :
+                          'bg-black/5 text-[var(--text-secondary)]'
                         }`}>
                           {s.kind === 'morfologia' ? 'Morfologia' : s.kind === 'marcha' ? 'Marcha' : 'Campeonato'}
                         </span>
-                        {today && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[var(--accent)] text-black uppercase">Hoje</span>}
+                        {today && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[var(--accent)] text-white uppercase">Hoje</span>}
                       </div>
                       <p className="text-xs font-medium mt-1 truncate">{s.evt.replace(/\s*\((MB|MP)\)\s*$/, '')}</p>
                       <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{s.weekday} · a partir das {s.time}</p>
@@ -309,7 +309,7 @@ export default function AnimalDetail({ params }: { params: Promise<{ id: string 
               navigator.clipboard.writeText(window.location.href)
             }
           }}
-          className="w-full py-3 bg-[var(--accent)] text-black font-semibold rounded-xl text-sm active:scale-[0.98] transition-transform"
+          className="w-full py-3 bg-[var(--accent)] text-white font-semibold rounded-xl text-sm active:scale-[0.98] transition-transform"
         >
           Compartilhar Animal
         </button>

@@ -36,7 +36,7 @@ export default function CookieConsent() {
         Ao continuar, voce concorda com nossa politica de privacidade.
       </p>
       <div className="flex gap-2">
-        <button onClick={accept} className="flex-1 py-2 bg-[var(--accent)] text-black font-semibold rounded-lg text-sm">
+        <button onClick={accept} className="flex-1 py-2 bg-[var(--accent)] text-white font-semibold rounded-lg text-sm">
           Aceitar
         </button>
         <button onClick={decline} className="flex-1 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] rounded-lg text-sm">

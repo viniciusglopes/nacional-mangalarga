@@ -76,7 +76,7 @@ export default function InstallPrompt() {
   return (
     <div className="fixed bottom-16 left-4 right-4 z-[95] max-w-lg mx-auto bg-[var(--bg-card)] border border-[var(--accent)]/40 rounded-xl p-4 shadow-2xl">
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-lg bg-[var(--accent)] flex items-center justify-center text-black font-bold text-sm flex-shrink-0">MM</div>
+        <div className="w-10 h-10 rounded-lg bg-[var(--accent)] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">MM</div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold">Instale o app Nacional MM</p>
           {iosMode ? (
@@ -87,7 +87,7 @@ export default function InstallPrompt() {
             <p className="text-xs text-[var(--text-muted)] mt-1">Adicione um atalho na tela inicial do seu celular para acessar rapidinho.</p>
           )}
         </div>
-        <button onClick={dismiss} className="text-[var(--text-muted)] hover:text-white flex-shrink-0" aria-label="Fechar">
+        <button onClick={dismiss} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] flex-shrink-0" aria-label="Fechar">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>
@@ -96,7 +96,7 @@ export default function InstallPrompt() {
           <button onClick={dismiss} className="flex-1 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] rounded-lg text-sm">Entendi</button>
         ) : (
           <>
-            <button onClick={install} className="flex-1 py-2 bg-[var(--accent)] text-black font-semibold rounded-lg text-sm">Instalar</button>
+            <button onClick={install} className="flex-1 py-2 bg-[var(--accent)] text-white font-semibold rounded-lg text-sm">Instalar</button>
             <button onClick={dismiss} className="flex-1 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] rounded-lg text-sm">Agora não</button>
           </>
         )}

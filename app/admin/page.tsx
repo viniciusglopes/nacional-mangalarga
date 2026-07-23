@@ -32,7 +32,7 @@ export default function AdminPage() {
   if (!token || !admin) return <LoginForm onLogin={(t, a) => { setToken(t); setAdmin(a) }} />
 
   return (
-    <main className="min-h-screen bg-[#0f0f1a]">
+    <main className="min-h-screen bg-[var(--bg-primary)]">
       <header className="bg-[var(--bg-card)] border-b border-[var(--border)] px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
@@ -55,7 +55,7 @@ export default function AdminPage() {
               key={t}
               onClick={() => setTab(t)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${
-                tab === t ? 'bg-[var(--accent)] text-black' : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white'
+                tab === t ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               {t === 'analytics' ? 'Analytics' : t === 'leads' ? 'Leads' : t === 'categoria' ? 'Categoria' : t === 'resultados' ? 'Resultados' : t === 'banners' ? 'Banners' : 'Admins'}
@@ -101,20 +101,20 @@ function LoginForm({ onLogin }: { onLogin: (token: string, admin: Admin) => void
   }
 
   return (
-    <main className="min-h-screen bg-[#0f0f1a] flex items-center justify-center px-4">
+    <main className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center px-4">
       <form onSubmit={handleSubmit} className="w-full max-w-sm bg-[var(--bg-card)] rounded-xl p-6 border border-[var(--border)]">
         <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-lg bg-[var(--accent)] flex items-center justify-center text-black font-bold text-xl mx-auto mb-3">MM</div>
+          <div className="w-12 h-12 rounded-lg bg-[var(--accent)] flex items-center justify-center text-white font-bold text-xl mx-auto mb-3">MM</div>
           <h1 className="text-lg font-bold">Admin</h1>
           <p className="text-xs text-[var(--text-muted)]">43a Nacional Mangalarga Marchador</p>
         </div>
         {error && <p className="text-red-400 text-sm mb-3 text-center">{error}</p>}
         <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required
-          className="w-full mb-3 py-2.5 px-3 bg-[#0f0f1a] border border-[var(--border)] rounded-lg text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]" />
+          className="w-full mb-3 py-2.5 px-3 bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]" />
         <input type="password" placeholder="Senha" value={password} onChange={e => setPassword(e.target.value)} required
-          className="w-full mb-4 py-2.5 px-3 bg-[#0f0f1a] border border-[var(--border)] rounded-lg text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]" />
+          className="w-full mb-4 py-2.5 px-3 bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]" />
         <button type="submit" disabled={loading}
-          className="w-full py-2.5 bg-[var(--accent)] text-black font-semibold rounded-lg text-sm disabled:opacity-50">
+          className="w-full py-2.5 bg-[var(--accent)] text-white font-semibold rounded-lg text-sm disabled:opacity-50">
           {loading ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
@@ -160,7 +160,7 @@ function LeadsPanel({ token }: { token: string }) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Usuarios Cadastrados ({leads.length})</h3>
         {leads.length > 0 && (
-          <button onClick={exportCSV} className="px-3 py-1.5 bg-[var(--accent)] text-black rounded-lg text-xs font-semibold">
+          <button onClick={exportCSV} className="px-3 py-1.5 bg-[var(--accent)] text-white rounded-lg text-xs font-semibold">
             Exportar CSV
           </button>
         )}
@@ -173,7 +173,7 @@ function LeadsPanel({ token }: { token: string }) {
         </div>
         <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
           <p className="text-[10px] text-[var(--text-muted)] uppercase">Com Email</p>
-          <p className="text-2xl font-bold text-blue-400">{leads.filter(l => l.email).length}</p>
+          <p className="text-2xl font-bold text-[var(--accent-dark)]">{leads.filter(l => l.email).length}</p>
         </div>
         <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
           <p className="text-[10px] text-[var(--text-muted)] uppercase">Com Telefone</p>
@@ -247,7 +247,7 @@ function CategoriaPanel({ token }: { token: string }) {
 
   if (loading) return <div className="text-center py-8"><div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" /></div>
 
-  const inputClass = "w-full py-2 px-3 bg-[#0f0f1a] border border-[var(--border)] rounded-lg text-sm text-white focus:outline-none focus:border-[var(--accent)] appearance-none"
+  const inputClass = "w-full py-2 px-3 bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] appearance-none"
 
   return (
     <div className="space-y-4">
@@ -261,7 +261,7 @@ function CategoriaPanel({ token }: { token: string }) {
           {categorias.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         {msg && <p className="text-sm text-green-400">{msg}</p>}
-        <button onClick={save} disabled={saving} className="px-4 py-2 bg-[var(--accent)] text-black rounded-lg text-sm font-semibold disabled:opacity-50">
+        <button onClick={save} disabled={saving} className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-semibold disabled:opacity-50">
           {saving ? 'Salvando...' : 'Salvar'}
         </button>
       </div>
@@ -306,7 +306,7 @@ function ResultadosPanel({ token }: { token: string }) {
       <h3 className="text-sm font-semibold">Resultados (resultados.abccmm.org.br)</h3>
       <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)] space-y-3">
         <p className="text-xs text-[var(--text-muted)]">
-          Ultima sincronizacao: <span className="text-white">{status?.ultima_sincronizacao ? new Date(status.ultima_sincronizacao).toLocaleString('pt-BR') : 'nunca'}</span>
+          Ultima sincronizacao: <span className="text-[var(--text-primary)]">{status?.ultima_sincronizacao ? new Date(status.ultima_sincronizacao).toLocaleString('pt-BR') : 'nunca'}</span>
         </p>
         {status?.classes_processadas != null && (
           <p className="text-xs text-[var(--text-muted)]">
@@ -316,7 +316,7 @@ function ResultadosPanel({ token }: { token: string }) {
         {status?.erro && (
           <p className="text-xs text-red-400">Ultimo erro: {status.erro}</p>
         )}
-        <button onClick={atualizar} disabled={syncing} className="px-4 py-2 bg-[var(--accent)] text-black rounded-lg text-sm font-semibold disabled:opacity-50">
+        <button onClick={atualizar} disabled={syncing} className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-semibold disabled:opacity-50">
           {syncing ? 'Atualizando... (pode levar alguns minutos)' : 'Atualizar Resultados'}
         </button>
         <p className="text-[10px] text-[var(--text-muted)]">
@@ -469,14 +469,14 @@ function BannersPanel({ token }: { token: string }) {
 
   if (loading) return <div className="text-center py-8"><div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" /></div>
 
-  const inputClass = "w-full py-2 px-3 bg-[#0f0f1a] border border-[var(--border)] rounded-lg text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
+  const inputClass = "w-full py-2 px-3 bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Banners ({banners.length})</h3>
         <button onClick={() => { setShowForm(true); setEditingId(null); setForm({ posicao: 'topo', titulo: '', imagem_url: '', link_url: '', html_content: '', ativo: true, ordem: 0 }) }}
-          className="px-3 py-1.5 bg-[var(--accent)] text-black rounded-lg text-xs font-semibold">
+          className="px-3 py-1.5 bg-[var(--accent)] text-white rounded-lg text-xs font-semibold">
           + Novo Banner
         </button>
       </div>
@@ -499,7 +499,7 @@ function BannersPanel({ token }: { token: string }) {
             Ativo
           </label>
           <div className="flex gap-2">
-            <button type="submit" className="px-4 py-2 bg-[var(--accent)] text-black rounded-lg text-sm font-semibold">
+            <button type="submit" className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-semibold">
               {editingId ? 'Salvar' : 'Criar'}
             </button>
             <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] rounded-lg text-sm">
@@ -514,7 +514,7 @@ function BannersPanel({ token }: { token: string }) {
           <div key={b.id} className={`bg-[var(--bg-card)] rounded-xl p-3 border ${b.ativo ? 'border-[var(--accent)]/30' : 'border-[var(--border)] opacity-50'}`}>
             <div className="flex items-center justify-between">
               <div>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${b.posicao === 'topo' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}`}>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${b.posicao === 'topo' ? 'bg-black/10 text-[var(--text-primary)]' : 'bg-[var(--accent-dark)]/10 text-[var(--accent-dark)]'}`}>
                   {b.posicao.toUpperCase()}
                 </span>
                 <span className="text-sm ml-2">{b.titulo || '(sem titulo)'}</span>
@@ -581,13 +581,13 @@ function AdminsPanel({ token }: { token: string }) {
 
   if (loading) return <div className="text-center py-8"><div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" /></div>
 
-  const inputClass = "w-full py-2 px-3 bg-[#0f0f1a] border border-[var(--border)] rounded-lg text-sm text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
+  const inputClass = "w-full py-2 px-3 bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Administradores ({admins.length})</h3>
-        <button onClick={() => setShowForm(true)} className="px-3 py-1.5 bg-[var(--accent)] text-black rounded-lg text-xs font-semibold">
+        <button onClick={() => setShowForm(true)} className="px-3 py-1.5 bg-[var(--accent)] text-white rounded-lg text-xs font-semibold">
           + Novo Admin
         </button>
       </div>
@@ -600,7 +600,7 @@ function AdminsPanel({ token }: { token: string }) {
           <input type="email" placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required className={inputClass} />
           <input type="password" placeholder="Senha" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required className={inputClass} />
           <div className="flex gap-2">
-            <button type="submit" className="px-4 py-2 bg-[var(--accent)] text-black rounded-lg text-sm font-semibold">Adicionar</button>
+            <button type="submit" className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-semibold">Adicionar</button>
             <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] rounded-lg text-sm">Cancelar</button>
           </div>
         </form>
