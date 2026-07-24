@@ -30,9 +30,38 @@ function parseQueryParam(url: string, param: string): number | null {
   return match ? parseInt(match[1], 10) : null
 }
 
+// "fetch failed" do Node/undici e so um envelope: a causa real (DNS, TLS,
+// timeout, conexao recusada) fica em error.cause. Sem isso a mensagem nao diz
+// nada sobre o que de fato deu errado.
+function describeFetchError(e: unknown): string {
+  const err = e as (Error & { cause?: unknown }) | undefined
+  const parts: string[] = []
+  let atual: unknown = err
+  let voltas = 0
+  while (atual && voltas < 5) {
+    const msg = atual instanceof Error ? atual.message : String(atual)
+    if (msg && !parts.includes(msg)) parts.push(msg)
+    atual = atual instanceof Error ? (atual as Error & { cause?: unknown }).cause : undefined
+    voltas++
+  }
+  return parts.join(' <- ') || 'erro desconhecido'
+}
+
+const FETCH_HEADERS = { 'User-Agent': 'Mozilla/5.0 (compatible; NacionalMMBot/1.0)' }
+const FETCH_TIMEOUT_MS = 20000
+
+async function fetchComTimeout(url: string): Promise<Response> {
+  return fetch(url, { headers: FETCH_HEADERS, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
+}
+
 // Busca o indice de categorias/marcha/campeonato e os links das 4 provas de cada uma.
 export async function fetchClasses(): Promise<ClasseResultado[]> {
-  const res = await fetch(`${BASE_URL}Resultados.aspx`)
+  let res: Response
+  try {
+    res = await fetchComTimeout(`${BASE_URL}Resultados.aspx`)
+  } catch (e) {
+    throw new Error(describeFetchError(e))
+  }
   if (!res.ok) throw new Error(`Resultados.aspx respondeu ${res.status}`)
   const html = await res.text()
   const $ = cheerio.load(html)
@@ -83,7 +112,12 @@ export async function fetchClasses(): Promise<ClasseResultado[]> {
 // Busca uma tabela de resultado (Andamento/Morfologia/Funcional/Final). Uma
 // categoria ainda nao julgada simplesmente retorna uma tabela vazia.
 export async function fetchResultTable(url: string): Promise<LinhaResultado[]> {
-  const res = await fetch(url)
+  let res: Response
+  try {
+    res = await fetchComTimeout(url)
+  } catch (e) {
+    throw new Error(describeFetchError(e))
+  }
   if (!res.ok) throw new Error(`${url} respondeu ${res.status}`)
   const html = await res.text()
   const $ = cheerio.load(html)
