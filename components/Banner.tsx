@@ -25,7 +25,11 @@ export default function Banner({ posicao }: { posicao: 'topo' | 'rodape' | 'head
       .eq('ativo', true)
       .order('ordem', { ascending: true })
       .then(({ data }) => {
-        if (data) setBanners(data)
+        // So conta banner com conteudo de fato renderizavel - uma linha ativa
+        // sem imagem/html nao deve contar para o "letreiro" entrar em modo
+        // rotativo (visualmente parece um banner "tentando carregar" o vazio).
+        const comConteudo = (data || []).filter(b => b.html_content || b.imagem_url)
+        setBanners(comConteudo)
       })
   }, [posicao])
 
