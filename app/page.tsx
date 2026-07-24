@@ -81,12 +81,21 @@ function HomeContent() {
     async function loadCategoriaAtual() {
       const { data, error } = await supabase.rpc('nm_get_categoria_atual')
       const atual = Array.isArray(data) ? data[0] : data
-      if (!error && atual?.categoria) {
+      // O pre-filtro so deve valer no primeiro acesso do usuario ao app nesta
+      // sessao do navegador; depois disso a navegacao/filtros ficam livres,
+      // mesmo que o usuario volte pra Home.
+      const jaAplicado = sessionStorage.getItem('nm_prefiltro_aplicado')
+      if (!jaAplicado && !error && atual?.categoria) {
         setCategoriaAtual(atual.categoria)
         setMarchaAtual(atual.tipo_marcha || null)
         setCategoria(prev => prev === 'Todas' ? atual.categoria : prev)
         if (atual.tipo_marcha) setMarcha(prev => prev === 'Todas' ? atual.tipo_marcha : prev)
+      } else if (!error && atual?.categoria) {
+        // Ainda mostra "Agora na Pista" no card, so nao mexe nos filtros.
+        setCategoriaAtual(atual.categoria)
+        setMarchaAtual(atual.tipo_marcha || null)
       }
+      sessionStorage.setItem('nm_prefiltro_aplicado', '1')
       setDefaultCategoriaReady(true)
     }
     loadCategoriaAtual()
@@ -220,6 +229,8 @@ function HomeContent() {
             </div>
           </div>
 
+          <Banner posicao="topo" />
+
           {campeonatoFilter && (
             <div className="flex items-center gap-2 mb-3 bg-[var(--accent)]/10 border border-[var(--accent)]/30 rounded-lg px-3 py-2">
               <span className="text-xs text-[var(--accent)] flex-1 truncate">{campeonatoFilter}</span>
@@ -307,8 +318,6 @@ function HomeContent() {
           </div>
         </div>
       </header>
-
-      <Banner posicao="topo" />
 
       <div className="px-4 pt-3 max-w-2xl mx-auto w-full">
         <Link
