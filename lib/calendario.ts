@@ -1,4 +1,4 @@
-import { Animal } from './supabase'
+import { Animal, Campeonato } from './supabase'
 
 export type DaySchedule = {
   date: string
@@ -356,4 +356,33 @@ export function getAnimalSchedule(
     }
   }
   return out
+}
+
+// --- Vinculo evento do calendario <-> campeonato --------------------------
+// O mesmo "assunto" (categoria normalizada) usado pra achar as provas de um
+// animal serve pra achar, entre os campeonatos cadastrados, qual e o dono de
+// um evento do calendario - permite clicar num evento e ir direto pro
+// catalogo filtrado daquela categoria. Eventos sem categoria propria
+// (progenie, solenidades, Grande Campeonato/Campeao dos Campeoes - que somam
+// varias categorias) simplesmente nao tem correspondente e ficam sem link.
+// Usado pelo filtro de categoria do calendario: um evento "e" de uma
+// categoria se o assunto normalizado bater, independente da modalidade
+// (Convencional/Exclusivamente Marcha) - a pessoa so quer saber quando a
+// categoria dela entra na pista.
+export function eventMatchesCategoria(evt: string, categoria: string): boolean {
+  const e = eventSubject(evt)
+  if (!e.kind) return false
+  return animalCategorySubjects(categoria).includes(e.subject)
+}
+
+export function findCampeonatoParaEvento(
+  evt: string,
+  campeonatos: Pick<Campeonato, 'nome' | 'categoria' | 'tipo_marcha'>[]
+): string | null {
+  const e = eventSubject(evt)
+  if (!e.kind || !e.marcha) return null
+  const match = campeonatos.find(c =>
+    c.tipo_marcha === e.marcha && animalCategorySubjects(c.categoria).includes(e.subject)
+  )
+  return match?.nome ?? null
 }

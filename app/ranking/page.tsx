@@ -4,16 +4,37 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
+import RankingDestaques from '@/components/RankingDestaques'
+import { getCategoriasMistas, ehExcecaoMarcha } from '@/lib/campeonatoMisto'
 
 type RankingItem = { id: number; nome: string; registro: string; haras: string; num_catalogo: number; total_votos: number }
 type CampeonatoRanking = { campeonato: string; ranking: RankingItem[] }
 
 const MEDAL_IMGS = ['/medals/medal_1.png', '/medals/medal_2.png', '/medals/medal_3.png']
 
+// nm_votos.campeonato guarda a string composta "{tipo_campeonato} - {tipo_marcha}
+// - {categoria}" (ex: "Exclusivamente Marcha - MB - Cavalo Castrado") - aqui a
+// gente separa pra exibir so a categoria de verdade, com "Excl. Marcha" como
+// selo quando for o caso, em vez de jogar a string crua na tela.
+function parseCampeonato(campeonato: string): { tipoCampeonato: string; tipoMarcha: string; categoria: string } {
+  const partes = campeonato.split(' - ')
+  return {
+    tipoCampeonato: partes[0] || '',
+    tipoMarcha: partes[1] || '',
+    categoria: partes.slice(2).join(' - ') || campeonato,
+  }
+}
+
 export default function RankingPage() {
+  const [secao, setSecao] = useState<'torcida' | 'destaques'>('torcida')
   const [rankings, setRankings] = useState<CampeonatoRanking[]>([])
   const [loading, setLoading] = useState(true)
   const [filterMarcha, setFilterMarcha] = useState<string>('Todas')
+  const [categoriasMistas, setCategoriasMistas] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    getCategoriasMistas().then(setCategoriasMistas)
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -56,29 +77,45 @@ export default function RankingPage() {
             <Link href="/" className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             </Link>
-            <h1 className="text-base font-bold">Ranking</h1>
-            <span className="ml-auto text-xs text-[var(--text-muted)]">{filtered.length} categorias com votos</span>
+            <h1 className="text-base font-bold">Estatísticas</h1>
           </div>
           <div className="flex gap-1 bg-[var(--bg-card)] rounded-lg p-0.5">
-            {['Todas', 'MB', 'MP'].map(m => (
+            {(['destaques', 'torcida'] as const).map(s => (
               <button
-                key={m}
-                onClick={() => setFilterMarcha(m)}
+                key={s}
+                onClick={() => setSecao(s)}
                 className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                  filterMarcha === m
-                    ? m === 'MB' ? 'bg-[var(--mb-color)] text-white' : m === 'MP' ? 'bg-[var(--mp-color)] text-white' : 'bg-[var(--accent)] text-white'
-                    : 'text-[var(--text-secondary)]'
+                  secao === s ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-secondary)]'
                 }`}
               >
-                {m === 'Todas' ? 'Todas' : m === 'MB' ? 'M. Batida' : 'M. Picada'}
+                {s === 'destaques' ? 'Estatísticas' : 'Favoritos da Gameleira'}
               </button>
             ))}
           </div>
+          {secao === 'torcida' && (
+            <div className="flex gap-1 bg-[var(--bg-card)] rounded-lg p-0.5 mt-2">
+              {['Todas', 'MB', 'MP'].map(m => (
+                <button
+                  key={m}
+                  onClick={() => setFilterMarcha(m)}
+                  className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    filterMarcha === m
+                      ? m === 'MB' ? 'bg-[var(--mb-color)] text-white' : m === 'MP' ? 'bg-[var(--mp-color)] text-white' : 'bg-[var(--accent)] text-white'
+                      : 'text-[var(--text-secondary)]'
+                  }`}
+                >
+                  {m === 'Todas' ? 'Todas' : m === 'MB' ? 'M. Batida' : 'M. Picada'}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
       <div className="flex-1 px-4 py-3 max-w-2xl mx-auto w-full">
-        {loading ? (
+        {secao === 'destaques' ? (
+          <RankingDestaques />
+        ) : loading ? (
           <div className="flex justify-center py-8">
             <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
           </div>
@@ -92,10 +129,26 @@ export default function RankingPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filtered.map(r => (
+            {filtered.map(r => {
+              const { tipoCampeonato, tipoMarcha, categoria } = parseCampeonato(r.campeonato)
+              return (
               <div key={r.campeonato} className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
                 <div className="px-3 py-2 border-b border-[var(--border)] bg-[var(--bg-card-hover)]">
-                  <p className="text-xs font-semibold truncate">{r.campeonato}</p>
+                  <div className="flex items-center gap-2">
+                    {tipoMarcha && (
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
+                        tipoMarcha === 'MB' ? 'bg-[var(--mb-color)]/10 text-[var(--mb-color)]' : 'bg-[var(--mp-color)]/10 text-[var(--mp-color)]'
+                      }`}>
+                        {tipoMarcha}
+                      </span>
+                    )}
+                    <p className="text-xs font-semibold truncate">{categoria}</p>
+                    {ehExcecaoMarcha(categoria, tipoMarcha, tipoCampeonato, categoriasMistas) && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[var(--accent-dark)]/10 text-[var(--accent-dark)] flex-shrink-0">
+                        Excl. Marcha
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[10px] text-[var(--accent)]">{r.ranking.reduce((s, a) => s + Number(a.total_votos), 0)} votos</p>
                 </div>
                 <div className="p-2 space-y-1">
@@ -118,7 +171,8 @@ export default function RankingPage() {
                   ))}
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

@@ -1,18 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import BottomNav from '@/components/BottomNav'
-import { SCHEDULE, getEventType, getMarchaType, isToday, isPast } from '@/lib/calendario'
+import CategoriaCombobox from '@/components/CategoriaCombobox'
+import { supabase, Campeonato } from '@/lib/supabase'
+import { SCHEDULE, getEventType, getMarchaType, isToday, isPast, findCampeonatoParaEvento, eventMatchesCategoria } from '@/lib/calendario'
+import { categoriaEspecialDoEvento } from '@/lib/campeoesDosCampeoes'
 
 export default function CalendarioPage() {
+  const router = useRouter()
   const [filter, setFilter] = useState<'todos' | 'MB' | 'MP'>('todos')
+  const [filterCategoria, setFilterCategoria] = useState<string>('Todas')
+  const [campeonatos, setCampeonatos] = useState<Campeonato[]>([])
   const [expandedDay, setExpandedDay] = useState<string | null>(() => {
     const today = SCHEDULE.find(s => isToday(s.date))
     return today?.date || null
   })
+  const destaqueRef = useRef<HTMLDivElement>(null)
 
   const nextIdx = SCHEDULE.findIndex(s => !isPast(s.date))
+  const categoriasDisponiveis = [...new Set(campeonatos.map(c => c.categoria))].sort()
+
+  // Pra deixar cada prova do calendario clicavel, levando pro catalogo
+  // filtrado daquela categoria.
+  useEffect(() => {
+    supabase.from('nm_campeonatos').select('*').then(({ data }) => setCampeonatos(data || []))
+  }, [])
+
+  // Ao abrir a pagina, leva direto pro dia de hoje (ou o proximo, se hoje
+  // estiver fora do periodo da expo) - sem isso o usuario tinha que rolar
+  // manualmente por todos os dias ja passados pra achar o de hoje.
+  useEffect(() => {
+    destaqueRef.current?.scrollIntoView({ block: 'start' })
+  }, [])
 
   return (
     <main className="flex flex-col min-h-screen">
@@ -42,6 +64,7 @@ export default function CalendarioPage() {
               </button>
             ))}
           </div>
+          <CategoriaCombobox categorias={categoriasDisponiveis} value={filterCategoria} onChange={setFilterCategoria} className="mt-2" />
         </div>
       </header>
 
@@ -49,26 +72,34 @@ export default function CalendarioPage() {
         {SCHEDULE.map((day, idx) => {
           const today = isToday(day.date)
           const past = isPast(day.date)
-          const expanded = expandedDay === day.date
+          const filtrandoCategoria = filterCategoria !== 'Todas'
+          // Com filtro de categoria ativo, expande todo dia que tiver
+          // resultado - sem isso o usuario teria que clicar em cada dia pra
+          // descobrir se a categoria escolhida esta la.
+          const expanded = filtrandoCategoria ? true : expandedDay === day.date
           const isNext = idx === nextIdx && !today
 
-          const filteredEvents = filter === 'todos'
-            ? day.events
-            : day.events.filter(e => {
-                const mt = getMarchaType(e)
-                return mt === null || mt === filter
-              })
+          const filteredEvents = day.events.filter(e => {
+            const mt = getMarchaType(e)
+            if (filter !== 'todos' && mt !== null && mt !== filter) return false
+            if (filtrandoCategoria && !eventMatchesCategoria(e, filterCategoria)) return false
+            return true
+          })
 
           if (filteredEvents.length === 0) return null
 
           return (
-            <div key={day.date} className={`rounded-xl border overflow-hidden transition-all ${
-              today ? 'border-[var(--accent)] bg-[var(--accent)]/5' :
-              isNext ? 'border-[var(--accent-dark)]/50 bg-[var(--accent-dark)]/5' :
-              day.highlight ? 'border-[var(--accent-dark)]/30' :
-              past ? 'border-[var(--border)] opacity-60' :
-              'border-[var(--border)]'
-            }`}>
+            <div
+              key={day.date}
+              ref={today || isNext ? destaqueRef : undefined}
+              className={`rounded-xl border overflow-hidden transition-all scroll-mt-24 ${
+                today ? 'border-[var(--accent)] bg-[var(--accent)]/5' :
+                isNext ? 'border-[var(--accent-dark)]/50 bg-[var(--accent-dark)]/5' :
+                day.highlight ? 'border-[var(--accent-dark)]/30' :
+                past ? 'border-[var(--border)] opacity-60' :
+                'border-[var(--border)]'
+              }`}
+            >
               <button
                 onClick={() => setExpandedDay(expanded ? null : day.date)}
                 className="w-full flex items-center gap-3 p-3 text-left bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] transition-colors"
@@ -105,8 +136,25 @@ export default function CalendarioPage() {
                   {filteredEvents.map((evt, i) => {
                     const type = getEventType(evt)
                     const mt = getMarchaType(evt)
+                    // Grande Campeonato/Campeao dos Campeoes nao tem
+                    // categoria de verdade (somam varias categorias) - usa
+                    // o link direto categoria+marcha (mesmo contrato da
+                    // pagina de Campeonatos) em vez do campeonato= comum.
+                    const especial = categoriaEspecialDoEvento(evt)
+                    const nomeCampeonato = !especial && campeonatos.length > 0 ? findCampeonatoParaEvento(evt, campeonatos) : null
+                    const linkavel = !!especial || !!nomeCampeonato
+                    const irParaLink = () => {
+                      if (especial) router.push(`/?categoria=${encodeURIComponent(especial.categoria)}&marcha=${especial.tipoMarcha}`)
+                      else if (nomeCampeonato) router.push(`/?campeonato=${encodeURIComponent(nomeCampeonato)}`)
+                    }
                     return (
-                      <div key={i} className="flex items-start gap-2.5 px-3 py-2 border-b border-[var(--border)] last:border-b-0">
+                      <div
+                        key={i}
+                        onClick={linkavel ? irParaLink : undefined}
+                        className={`flex items-start gap-2.5 px-3 py-2 border-b border-[var(--border)] last:border-b-0 ${
+                          linkavel ? 'cursor-pointer hover:bg-[var(--bg-card-hover)] transition-colors' : ''
+                        }`}
+                      >
                         <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
                           type === 'especial' ? 'bg-[var(--accent-dark)]' :
                           type === 'morfologia' ? 'bg-[var(--text-primary)]' :
@@ -115,7 +163,7 @@ export default function CalendarioPage() {
                           'bg-[var(--text-muted)]'
                         }`} />
                         <div className="min-w-0 flex-1">
-                          <p className={`text-xs ${type === 'especial' ? 'font-bold text-[var(--accent-dark)]' : ''}`}>{evt}</p>
+                          <p className={`text-xs ${type === 'especial' ? 'font-bold text-[var(--accent-dark)]' : ''} ${linkavel ? 'text-[var(--accent)] underline decoration-dotted underline-offset-2' : ''}`}>{evt}</p>
                         </div>
                         {mt && (
                           <span className={`text-[9px] font-bold px-1 py-0.5 rounded flex-shrink-0 ${

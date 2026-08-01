@@ -29,6 +29,8 @@ export type Animal = {
   uf: string | null
   destaque: boolean
   tambem_excl_marcha: boolean
+  finalista_marcha: boolean
+  retirado: boolean
 }
 
 export type Campeonato = {

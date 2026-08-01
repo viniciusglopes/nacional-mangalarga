@@ -4,9 +4,17 @@ import { useState, useEffect } from 'react'
 import { supabase, Animal } from '@/lib/supabase'
 import Link from 'next/link'
 import BottomNav from '@/components/BottomNav'
+import { formatColocacaoOficial } from '@/lib/colocacao'
+import { separarResultadoPrincipal, formatClassificacaoExtra, formatTituloExtra, type ResultadoComContexto } from '@/lib/resultadosAnimal'
+
+type ResultadoResumo = { colocacao: string | null; pontuacao_funcional: string | null; pontuacao_morfologia: string | null; pontuacao_andamento: string | null }
 
 export default function Favoritos() {
   const [animals, setAnimals] = useState<Animal[]>([])
+  const [resultadosPorCatalogo, setResultadosPorCatalogo] = useState<Record<string, ResultadoResumo>>({})
+  // Segunda linha de resultado (categoria diferente da origem) quando o
+  // animal tambem disputa um Grande Campeonato/Campeao dos Campeoes.
+  const [resultadosExtrasPorCatalogo, setResultadosExtrasPorCatalogo] = useState<Record<string, ResultadoComContexto[]>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -23,6 +31,32 @@ export default function Favoritos() {
         .order('num_catalogo_int', { ascending: true, nullsFirst: false })
       setAnimals(data ?? [])
       setLoading(false)
+
+      const catalogos = (data ?? []).map(a => a.num_catalogo).filter((n): n is string => !!n)
+      if (catalogos.length > 0) {
+        const { data: resultados } = await supabase
+          .from('nm_resultados')
+          .select('num_catalogo, categoria, tipo_marcha, tipo_campeonato, colocacao, pontuacao_funcional, pontuacao_morfologia, pontuacao_andamento, origem')
+          .eq('tipo_prova', 'final')
+          .in('num_catalogo', catalogos)
+        if (resultados) {
+          const linhasPorCatalogo = new Map<string, ResultadoComContexto[]>()
+          for (const r of resultados as (ResultadoComContexto & { num_catalogo: string })[]) {
+            if (!linhasPorCatalogo.has(r.num_catalogo)) linhasPorCatalogo.set(r.num_catalogo, [])
+            linhasPorCatalogo.get(r.num_catalogo)!.push(r)
+          }
+          const porId = new Map((data ?? []).map(a => [a.num_catalogo, a]))
+          const principais: Record<string, ResultadoResumo> = {}
+          const extras: Record<string, ResultadoComContexto[]> = {}
+          for (const [num, linhas] of linhasPorCatalogo) {
+            const separado = separarResultadoPrincipal(linhas, porId.get(num) ?? linhas[0])
+            if (separado.principal) principais[num] = separado.principal
+            if (separado.extras.length > 0) extras[num] = separado.extras
+          }
+          setResultadosPorCatalogo(principais)
+          setResultadosExtrasPorCatalogo(extras)
+        }
+      }
     }
     load()
   }, [])
@@ -54,33 +88,47 @@ export default function Favoritos() {
           </div>
         ) : (
           <div className="space-y-2">
-            {animals.map(animal => (
+            {animals.map(animal => {
+              const resultado = animal.num_catalogo ? resultadosPorCatalogo[animal.num_catalogo] : undefined
+              return (
               <Link
                 key={animal.id}
                 href={`/animal/${animal.num_catalogo || animal.id}`}
-                className="block bg-[var(--bg-card)] rounded-xl p-3 border border-[var(--border)] hover:border-[var(--accent)]/30 transition-all active:scale-[0.98]"
+                className="block bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)] hover:border-[var(--accent)]/30 transition-all active:scale-[0.98]"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
                         animal.tipo_marcha === 'MB' ? 'bg-[var(--mb-color)]/10 text-[var(--mb-color)]' : 'bg-[var(--mp-color)]/10 text-[var(--mp-color)]'
                       }`}>
                         {animal.tipo_marcha}
                       </span>
                     </div>
-                    <h3 className="text-sm font-semibold truncate">{animal.nome}</h3>
-                    <p className="text-xs text-[var(--text-secondary)] mt-0.5">{animal.categoria}</p>
+                    <h3 className="text-base font-semibold">{animal.nome}</h3>
+                    <p className="text-sm text-[var(--text-secondary)] mt-0.5">{animal.categoria}</p>
+                    {resultado && (
+                      <p className="text-xs text-[var(--text-muted)] mt-1">
+                        Morfologia: {resultado.pontuacao_morfologia ?? '—'} · Funcional: {resultado.pontuacao_funcional ?? '—'} · Marcha: {resultado.pontuacao_andamento ?? '—'} · Classificação: {formatColocacaoOficial(resultado.colocacao)}
+                      </p>
+                    )}
+                    {animal.num_catalogo && resultadosExtrasPorCatalogo[animal.num_catalogo]?.map((extra, i) => (
+                      <p key={i} className="text-xs text-[var(--accent)] mt-0.5 font-medium flex items-center gap-1">
+                        <span>🏆</span>
+                        <span>{formatTituloExtra(extra)}: {formatClassificacaoExtra(extra)}</span>
+                      </p>
+                    ))}
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-[10px] text-[var(--text-muted)] font-mono">Reg. {animal.registro}</p>
+                    <p className="text-xs text-[var(--text-muted)] font-mono">Reg. {animal.registro}</p>
                     {animal.haras && (
-                      <p className="text-[10px] text-[var(--accent)] mt-0.5 max-w-[120px] truncate">{animal.haras}</p>
+                      <p className="text-xs text-[var(--accent)] mt-0.5 max-w-[120px]">{animal.haras}</p>
                     )}
                   </div>
                 </div>
               </Link>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
